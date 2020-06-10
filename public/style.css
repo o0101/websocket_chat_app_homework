@@ -1,0 +1,102 @@
+body {
+  margin: 0;
+}
+
+article.app {
+  display: grid;
+  height: 100%;
+  grid-template-areas:
+    "nav"
+    "content"
+    "footer";
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr;
+  grid-gap: 0.5em;
+  max-height: 100%;
+}
+
+nav {
+  background: silver;
+  grid-area: nav;
+}
+section.current-view {
+  grid-area: content;
+  display: grid;
+  grid-template-areas:
+    "scroller"
+    "footer";
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+  max-height: 100%;
+  overflow: auto;
+}
+
+ul {
+  display: flex;
+  margin: 0;
+}
+
+ul.chat {
+  grid-area: scroller;
+  flex-direction: column;
+  background: linear-gradient(to bottom, dodgerblue, aquamarine);
+  overflow: auto;
+  height: 100%;
+  max-height: 100%;
+}
+
+ul.chat li:last-of-type {
+  margin-bottom: 1em;
+}
+
+form.messager {
+  display: flex;
+  grid-area: footer;
+  margin: 0;
+}
+
+form.messager #composer {
+  flex-grow: 1;
+  padding: 0.25em;
+}
+li {
+  display: inline-block;
+  padding: 0.5em;
+  margin: 0.5em;
+  border-radius: 0.5em;
+  border: thin solid silver;
+  box-shadow: 0 1px 1px grey;
+  background: snow;
+}
+li p {
+  margin: 0.25em;
+}
+
+li time {
+  font-size: x-small;
+  color: navy;
+}
+
+li cite {
+  font-size: smaller;
+}
+
+li.message {
+  display: table;
+  max-width: 500px;
+}
+
+li div.metadata {
+  text-align: right;
+}
+li.room-note {
+  align-self: center;
+  background: burlywood;
+}
+li.from-me {
+  align-self: flex-end;
+}
+li.from-me p {
+  text-align: right;
+}

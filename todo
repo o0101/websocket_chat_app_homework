@@ -1,16 +1,16 @@
 Development environment: Chrome (on windows), vim, Node.JS on Debian
 
 Stage 1 (necessary requirements)
-- make chat view: list and form
-- add function to select latest chat message and scroll into view if needed (use css :last) (runs on rerender this route)
-- add onsubmit to form to send message
-- add onmessage handler to redraw whole app
-- and onhashchange handler to redraw whole app (for settings/chat routes)
+- DONE make chat view: list and form
+- DONE add function to select latest chat message and scroll into view if needed (use css :last) (runs on rerender this route)
+- DONE add onsubmit to form to send message
+- DONE add onmessage handler to redraw whole app
+- DONE and onhashchange handler to redraw whole app (for settings/chat routes)
 - add title blinking effect if tab is not active
-- add form to settings page
-- add onsubmit to that form to save to localstorage
-- add function to load settings from localstorage (runs on rerender this route)
-- add a default settings static object
+- DONE add form to settings page
+- DONE add onsubmit to that form to save to localstorage
+- DONE add function to load settings from localstorage (runs on rerender this route)
+- DONE add a default settings static object
 - add css to fulfill minimal requirements (my message right, others messages left, responsive, landscape/portrait, light/dark mode)
 - add readme with features (required and optional sections)
 - add tests layer 1 (use typescript, types for message, settings)

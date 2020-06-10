@@ -9,8 +9,8 @@ function toDOM(markup) {
 export function update(view, state) {
   consistentFocus.next();
   
-  const docEl = toDOM(view(state)).documentElement;
-  document.documentElement.replaceWith(docEl);
+  const body = toDOM(view(state)).body;
+  document.body.replaceWith(body);
 
   consistentFocus.next();
 }
