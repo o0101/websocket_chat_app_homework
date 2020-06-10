@@ -34,3 +34,8 @@ function runFormTest(...a) {
 
 self.runFormTest = runFormTest;
 
+const ws = new WebSocket(`ws://${location.host}/`);
+ws.onmessage =  m => console.log('socket msg', m);
+ws.onopen = c => console.log('socket connect', c);
+ws.onclose = c => console.log('socket close', c);
+
