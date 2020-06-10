@@ -1,10 +1,12 @@
 {
-  "name": "bulgogi",
+  "name": "@dosy-private/livesnapdragon",
   "version": "1.0.3",
-  "description": "non-framework render functions",
-  "main": "src/b.js",
+  "description": "simple chat app",
+  "main": "index.js",
   "scripts": {
-    "test": "serve -p 8080"
+    "test": "nodemon -r esm index.js",
+    "start": "node -r esm index.js",
+    "tests": "nodemon -r esm tests.js"
   },
   "repository": {
     "type": "git",
@@ -22,5 +24,12 @@
   "bugs": {
     "url": "https://github.com/cris691/bulgogi/issues"
   },
-  "homepage": "https://github.com/cris691/bulgogi#readme"
+  "homepage": "https://github.com/cris691/bulgogi#readme",
+  "dependencies": {
+    "esm": "^3.2.25",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
 }
