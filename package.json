@@ -1,0 +1,26 @@
+{
+  "name": "bulgogi",
+  "version": "1.0.3",
+  "description": "non-framework render functions",
+  "main": "src/b.js",
+  "scripts": {
+    "test": "serve -p 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cris691/bulgogi.git"
+  },
+  "keywords": [
+    "non-framework",
+    "render",
+    "functions",
+    "bulgogi",
+    "dosy"
+  ],
+  "author": "@dosy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cris691/bulgogi/issues"
+  },
+  "homepage": "https://github.com/cris691/bulgogi#readme"
+}
