@@ -1,41 +1,172 @@
 import {update} from './b.js';
 
-let counter = 0;
+const DefaultSettings = {
+  username: 'cris'
+};
 
-runTest();
-setInterval(runTest, 2000);
+const State = {
+  settings: {
+    username: 'cris'
+  },
+  chat: {
+    messages: []
+  }
+};
 
-function runTest() {
-  update(Test, {counter:counter++});
-}
+const globalFuncs = {
+  sendMessage, saveSettings
+};
 
-function Test(state) {
-  return `
-    <article class=excellent>
-      <h1>An Article Title</h1>
-      ${Test2(state)}
-    </article>
-  `
-}
+let socket;
 
-function Test2({counter}) {
-  return `
-    <form method=GET action=/hello>
-      <input type=number name=xchakka value=${counter}>
-      <input type=text name=bigloo value=${counter}>
-      <button onclick=runFormTest(this,event,onclick,name,xchakka);>Do it</button>
-    </form>
-  `;
-}
+start();
 
-function runFormTest(...a) { 
-  return (console.log(...a), a[1].preventDefault(), false) 
-}; 
+// function to run on load
+  function start() {
+    draw();
+    connectToServer();
+    addRouteHandlers();
+    Object.assign(globalThis, globalFuncs);
+  }
 
-self.runFormTest = runFormTest;
+// main render function
+  function draw(newState = {}) {
+    log({newState});
+    Object.assign(State, clone(newState));
+    update(App, State);
+  }
 
-const ws = new WebSocket(`ws://${location.host}/`);
-ws.onmessage =  m => console.log('socket msg', m);
-ws.onopen = c => console.log('socket connect', c);
-ws.onclose = c => console.log('socket close', c);
+// views
+  function App(state) {
+    let currentView;
 
+    switch(state.route) {
+      case 'chat':
+        currentView = Chat;
+        break;
+      case 'settings':
+        currentView = Settings;
+        break;
+      default:
+        currentView = Chat;
+        break;
+    }
+
+    return `
+      <article class=app>
+        <nav class=routes>
+          <ul>
+            <li><a href=#chat>Chat</a>
+            <li><a href=#settings>Settings</a>
+          </ul>
+        </nav>
+        <section class=current-view>
+        ${currentView(state)}
+        </section>
+      </article>
+    `
+  }
+
+  function Chat(state) {
+    return `
+      <ul>
+        ${state.chat.messages.length ? 
+            state.chat.messages.map(msg => ChatMessage(msg)).join('\n') 
+          :
+            `<div class=room-note>No chat history</div>`
+        }
+      </ul>
+      <form onsubmit=sendMessage(event);>
+        <textarea autofocus name=message></textarea>
+        <button>Send</button>
+      </form>
+    `;
+  }
+
+  function ChatMessage(msg) {
+    return `
+      <li class=message>
+        <p>${msg}</p>
+        <cite rel=author>user</cite>
+        <date>Now</date>
+      </li>
+    `;
+  }
+
+  function Settings(state) {
+    return `
+      <form onsubmit=saveSettings(event);>
+        <fieldset>
+          <legend>Settings</legend>
+          <p>
+            <label>
+              Username
+              <input type=text name=username placeholder=username value=${state.settings.username}>
+            </label>
+          <p>
+            <button>Save</button>
+        </fieldset>
+      </form>
+    `;
+  }
+
+// route related
+  function addRouteHandlers() {
+    self.onhashchange = ({newURL}) => {
+      const route = (new URL(newURL)).hash.slice(1);
+      draw({
+        route
+      });
+    };
+  }
+
+// communication related 
+  function connectToServer() {
+    const ws = new WebSocket(`ws://${location.host}/`);
+    ws.onmessage = receiveMessage;
+    ws.onopen = c => console.log('Connected to server', c);
+    ws.onclose = c => alert('No connection to server');
+    ws.onerror = c => alert('Error connecting to server');
+    socket = ws;
+  }
+
+  function receiveMessage(messageEvent) {
+    const {data:message} = messageEvent;
+    draw({chat:{
+      messages: State.chat.messages.concat([message]) 
+    }});
+  }
+
+  function sendMessage(submission) {
+    submission.preventDefault();
+    const {message:{value:message}} = submission.target;
+
+    try {
+      socket.send(message);
+    } catch(e) {
+      alert('Error sending message');
+      console.warn(e);
+    }
+  }
+
+// settings related
+  function saveSettings(submission) {
+    submission.preventDefault();
+    localStorage.setItem('app-settings', JSON.stringify(State.settings));
+  }
+
+  function loadSettings() {
+    let settings = localStorage.getItem('app-settings');
+    if ( ! settings ) {
+      settings = DefaultSettings; 
+    }
+    Objet.assign(State.settings, clone(settings));
+  }
+
+// helpers
+  function log(o) {
+    console.log(JSON.stringify(o,null,2));
+  }
+  function clone(o) {
+    return JSON.parse(JSON.stringify(o));
+  }

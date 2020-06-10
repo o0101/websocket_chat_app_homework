@@ -23,7 +23,7 @@ app.use(express.static(path.resolve(APP_ROOT, 'public')));
 wss.on('connection', (ws, req) => {
   const ip = req.connection.remoteAddress;
   Members.add({ws,ip});
-  ws.on('message', message => broadcoast(message));
+  ws.on('message', message => broadcast(message));
   log({newConnection:{at:Date.now(), ip}});
 });
 
@@ -35,6 +35,7 @@ server.listen(PORT, err => {
 });
 
 function broadcast(message) {
+  console.log(message);
   Members.forEach(({ws}) => {
     ws.send(message); 
   });
