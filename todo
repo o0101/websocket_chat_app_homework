@@ -6,6 +6,7 @@ Stage 1 (necessary requirements)
 - DONE add onsubmit to form to send message
 - DONE add onmessage handler to redraw whole app
 - DONE and onhashchange handler to redraw whole app (for settings/chat routes)
+- DONE add everything to settings (light/dark, crtl+enter, etc)
 - add title blinking effect if tab is not active
 - DONE add form to settings page
 - DONE add onsubmit to that form to save to localstorage

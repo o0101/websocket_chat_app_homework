@@ -62,8 +62,10 @@ start();
       <article class=app>
         <nav class=routes>
           <ul>
-            <li><a href=#chat>Chat</a>
-            <li><a href=#settings>Settings</a>
+            <li><a id=chat href=#chat 
+              class="${state.route == 'chat' ? 'active' : ''}">Chat</a>
+            <li><a id=settings href=#settings 
+              class="${state.route == 'settings' ? 'active' : ''}">Settings</a>
           </ul>
         </nav>
         <section class=current-view>
@@ -85,7 +87,7 @@ start();
         }
       </ul>
       <form class=messager onsubmit=sendMessage(event);>
-        <textarea id=composer autofocus name=message></textarea>
+        <textarea id=composer autofocus name=message placeholder="Enter message"></textarea>
         <button>Send</button>
       </form>
     `;
@@ -141,16 +143,67 @@ start();
     loadSettings();
 
     return `
-      <form onsubmit=saveSettings(event);>
+      <form class=settings onsubmit=saveSettings(event);>
         <fieldset>
-          <legend>Settings</legend>
           <p>
             <label>
-              Username
-              <input type=text name=username placeholder=username value=${state.settings.username}>
+              User name
+              <br>
+              <input type=text name=username placeholder="guest0001" value=${state.settings.username}>
+            </label>
+          <p>
+            <label for=light>
+              Interface color
+            </label>
+            <br>
+            <label>
+              <input id=light type=radio name=colorscheme value=light checked>
+              Light
+            </label>
+            <label>
+              <input type=radio name=colorscheme value=dark>
+              Dark
+            </label>
+          <p>
+            <label for=ampm>
+              Clock display
+            </label>
+            <br>
+            <label>
+              <input id=ampm type=radio name=timeformat value=ampm checked>
+              12 Hours
+            </label>
+            <label>
+              <input type=radio name=timeformat value=military>
+              24 Hours
+            </label>
+          <p>
+            <label for=ctrlsend>
+              Send messages on <kbd>CTRL</kbd>+<kbd>ENTER</kbd>
+            </label>
+            <br>
+            <label>
+              <input id=ctrlsend type=radio name=sendhotkey value=ctrlsend>
+              On
+            </label>
+            <label>
+              <input type=radio name=sendhotkey value=none checked>
+              Off
+            </label>
+          <p>
+            <label>
+              Language
+              <br>
+              <select name=language>
+                <option selected value=en>English</option>
+                <option value=zh>Chinese</option>
+              </select>
             </label>
           <p>
             <button>Save</button>
+        </fieldset>
+        <fieldset>
+          <button>Reset to defaults</button>
         </fieldset>
       </form>
     `;

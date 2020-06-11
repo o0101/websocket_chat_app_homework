@@ -42,7 +42,6 @@ server.listen(PORT, err => {
 });
 
 function broadcast(data, ip, id) {
-  console.log(Names, NameSet);
   if ( typeof data == "string" ) {
     data = JSON.parse(data);
   }
