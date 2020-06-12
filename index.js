@@ -77,9 +77,7 @@ if ( weAreMainModule() ) {
 
       data.at = Date.now();
 
-      // add username saved for this connection 
-        // if instead we let clients send with messages letting clients send 
-        // they could impersonate anyone
+      // add username saved for this connection so clients can't impersonate
       data.username = Names.get(id);
 
       // keep track of name changes
@@ -117,7 +115,7 @@ if ( weAreMainModule() ) {
         if ( NameSet.has(data.newUsername) ) {
           // generate a random unused username
           data.newUsername += '.' + (Math.random()*10000).toString(36);
-          // tell the client we automatically changed their usrename to an unused one
+          // tell the client we automatically changed their username to an unused one
           data.automaticUpdate = true;
         }
         NameSet.add(data.newUsername);

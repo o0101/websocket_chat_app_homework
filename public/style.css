@@ -1,6 +1,8 @@
 /* theme base */
   :root {
-
+    height: 100%;
+    max-height: 100%;
+    display: flex;
   }
 
   :root.dark {
@@ -8,21 +10,26 @@
   }
 
   body {
+    display: flex;
+    flex-grow: 1;
     margin: 0;
+    padding: 0.5em;
+  }
+
+  fieldset {
   }
 
 /* app */
   article.app {
     display: grid;
-    height: 100%;
     grid-template-areas:
       "nav"
-      "content"
-      "footer";
-    grid-template-rows: auto 1fr auto;
+      "content";
+    grid-template-rows: auto 1fr;
     grid-template-columns: 1fr;
     grid-gap: 0.5em;
-    max-height: 100%;
+    width: 100%;
+    margin: 0 auto;
   }
 
   /* nav */
@@ -43,13 +50,12 @@
     section.current-view {
       grid-area: content;
       display: grid;
+      grid-gap: 0.5em;
       grid-template-areas:
         "scroller"
         "footer";
       grid-template-columns: 1fr;
       grid-template-rows: 1fr auto;
-      height: 100%;
-      max-height: 100%;
       overflow: auto;
     }
 
@@ -70,17 +76,44 @@
         margin: 0;
       }
 
+      form.settings {
+        position: relative;
+      }
+
+      fieldset {
+        max-height: 100%;
+        box-sizing: border-box;
+        border: 0;
+      }
+
+      fieldset legend {
+        position: fixed;
+        background: lime;
+        padding: 0.25em;
+        border-radius: 0.5em;
+        left: 50%;
+        transform: translate(-1em, -50%);
+      }
+
+      fieldset legend:empty {
+        display: none;
+      }
+
       ul.chat li:last-of-type {
         margin-bottom: 1em;
       }
 
-      form.messager, form.settings fieldset:last-of-type {
+      form.messager {
         display: flex;
         grid-area: footer;
         margin: 0;
       }
 
-      form.messager #composer {
+      button.defaults {
+        text-align: center;
+      }
+
+      form.messager .composer {
         flex-grow: 1;
         padding: 0.25em;
       }
