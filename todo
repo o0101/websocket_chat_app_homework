@@ -12,6 +12,7 @@ Stage 1 (necessary requirements)
 - DONE add onsubmit to that form to save to localstorage
 - DONE add function to load settings from localstorage (runs on rerender this route)
 - DONE add a default settings static object
+- DONE well commented self-documenting code
 - add css to fulfill minimal requirements (my message right, others messages left, responsive, landscape/portrait, light/dark mode)
 - add readme with features (required and optional sections)
 - add tests layer 1 (use typescript, types for message, settings)
@@ -19,6 +20,7 @@ Stage 1 (necessary requirements)
 - test in Firefox, and Safari
 
 Stage 2 (my own improvement)
+- DONE use no frameworks, only vanilla JS (per response to question)
 - perfect markup (accessible, semantic, minimal)
 - improve css (use classless css reset, factor out themeable variables)
 - format code nicely

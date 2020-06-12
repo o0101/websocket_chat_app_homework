@@ -1,32 +1,45 @@
 import {update} from './b.js';
 
-const DefaultSettings = {
-  username: 'cris'
-};
+// constants and state
+  // module constants
+    // config constants
+      // silence logging 
+      const Silent = false;
+      const InitialReconnectDelay = 1000;
+      const ExponentialBackoff = 1.618;
+      // a unique code to identify the client 
+      // right now we only use this for checking if server updated our name 
+      const myCode = (Date.now()*Math.random()).toString(36);
 
-const State = {
-  settings: {
-    username: 'cris'
-  },
-  chat: {
-    messages: []
-  }
-};
+    // functions saved in global scope so they are accessible as inline event handlers
+      const globalFuncs = {
+        sendMessage, saveSettings
+      };
 
-const globalFuncs = {
-  sendMessage, saveSettings
-};
+  // app state (chat and settings)
+    const DefaultSettings = {
+      username: 'cris',
+      colorscheme: 'light',
+      timeformat: 'ampm',
+      sendhotkey: 'none',
+      language: 'en'
+    };
 
-const InitialReconnectDelay = 1000;
-const ExponentialBackoff = 1.618;
-const code = (Date.now()*Math.random()).toString(36);
-let reconnectDelay = InitialReconnectDelay;
-let socket;
+    const State = {
+      settings: clone(DefaultSettings),
+      chat: {
+        messages: []
+      }
+    };
 
-start();
+  // module variables
+    let reconnectDelay = InitialReconnectDelay;
+    let socket;
+
+loadChatApp();
 
 // function to run on load
-  function start() {
+  function loadChatApp() {
     Object.assign(globalThis, globalFuncs);
     loadSettings();
     addRouteHandlers();
@@ -93,49 +106,50 @@ start();
     `;
   }
 
-  function ChatMessage({message, at, newUsername, username, disconnection, fromMe}) {
-    const dateAt = new Date(at);
-    const time = dateAt.toLocaleTimeString(navigator.language, {timeStyle:'short'}).trim();
-    const [clockTime, half] = time.split(/\s+/g);
-    const [hour,minute] = clockTime.split(/:/g);
-    const fullTime = `${hour}:${minute} ${half}`;
-    if ( newUsername && username && username != newUsername ) {
-      return `
-        <li class=room-note> 
-          <p>${safe(username)} changed their name to ${safe(newUsername)}</p>
-          <div class=metadata>
-            <time datetime=${at}>${fullTime}</time>
-          </div>
-        </li>
-      `;
-    } else if ( newUsername ) {
-      return `
-        <li class=room-note> 
-          <p>${safe(newUsername)} entered the room.</p>
-          <div class=metadata>
-            <time datetime=${at}>${fullTime}</time>
-          </div>
-        </li>
-      `;
-    } else if ( disconnection ) {
-      return `
-        <li class=room-note> 
-          <p>${safe(username)} left the room.</p>
-          <div class=metadata>
-            <time datetime=${at}>${fullTime}</time>
-          </div>
-        </li>
-      `;
-    } else {
-      return `
-        <li class="message ${fromMe? 'from-me' : ''}">
-          <p>${safe(message)}</p>
-          <div class=metadata>
-            <cite rel=author>${safe(username)}</cite>
-            <time datetime=${at}>${fullTime}</time>
-          </div>
-        </li>
-      `;
+  function ChatMessage({message, at, newUsername, username, disconnection, fromMe, viewType}) {
+    const fullTime = getClockTime(at, State.settings.timeformat);
+    switch(viewType) {
+      case 'note.nameChange':
+        return `
+          <li class=room-note> 
+            <p>${safe(username)} changed their name to ${safe(newUsername)}</p>
+            <div class=metadata>
+              <time datetime=${at}>${fullTime}</time>
+            </div>
+          </li>
+        `;
+      case 'note.newMember':
+        return `
+          <li class=room-note> 
+            <p>${safe(newUsername)} entered the room.</p>
+            <div class=metadata>
+              <time datetime=${at}>${fullTime}</time>
+            </div>
+          </li>
+        `;
+      case 'note.disconnection':
+        return `
+          <li class=room-note> 
+            <p>${safe(username)} left the room.</p>
+            <div class=metadata>
+              <time datetime=${at}>${fullTime}</time>
+            </div>
+          </li>
+        `;
+      case 'chat.message':
+        return `
+          <li class="message ${fromMe? 'from-me' : ''}">
+            <p>${safe(message)}</p>
+            <div class=metadata>
+              <cite rel=author>${safe(username)}</cite>
+              <time datetime=${at}>${fullTime}</time>
+            </div>
+          </li>
+        `;
+      case 'log.unknownMessageType':
+      default:
+        log({unknownMessageType: {message, at, newUsername, username, disconnection, fromMe, viewType}});
+        break;
     }
   }
 
@@ -225,7 +239,7 @@ start();
     ws.onmessage = receiveMessage;
     ws.onopen = c => {
       console.log(`Connected to server ${ws.url}`);
-      send({code,newUsername:State.settings.username});
+      send({code:myCode,newUsername:State.settings.username});
       reconnectDelay = InitialReconnectDelay;
     };
     ws.onclose = ws.onerror = c => {
@@ -240,13 +254,19 @@ start();
     let {data} = messageEvent;
     data = JSON.parse(data);
 
-    if ( data.newUsername && data.automaticUpdate && data.code == code ) {
+    // if server has updated my username to an unused one
+    if ( data.newUsername && data.automaticUpdate && data.code == myCode ) {
+      // persist the new username it to my settings
       persist({username:data.newUsername});
     }
 
+    // messages with 'fromMe' true go on my side of the chat
     if ( data.username == State.settings.username ) {
       data.fromMe = true;
     }
+
+    // work out the format to display this message
+    data.viewType = computeViewType(data);
 
     draw({chat:{
       messages: State.chat.messages.concat([data]) 
@@ -289,7 +309,7 @@ start();
     log({newSettings});
     // server accounts for usernames, so we need to send a change
     if ( newSettings.username != State.settings.username ) {
-      send({code, newUsername: newSettings.username});
+      send({code:myCode, newUsername: newSettings.username});
     }
 
     persist(newSettings);
@@ -335,6 +355,7 @@ start();
 
 // helpers
   function log(o) {
+    if ( Silent ) return;
     console.log(JSON.stringify(o,null,2));
   }
 
@@ -345,3 +366,39 @@ start();
   function safe(s = '') {
     return s.replace(/"/g, '&quot;').replace(/>/g, '&gt;').replace(/</g, '&lt;');
   }
+
+  // format timestamp into a 12 or 24 clock time 
+  function getClockTime(timestamp, mode) {
+    const dateAt = new Date(timestamp);
+    const time = dateAt.toLocaleTimeString(navigator.language, {timeStyle:'short'}).trim();
+    const [clockTime, half] = time.split(/\s+/g);
+    const [hour,minute] = clockTime.split(/:/g);
+
+    if ( mode == 'ampm' ) {
+      return `${hour}:${minute} ${half}`;
+    } else {
+      return `${(parseInt(hour) + (half == 'PM' ? 12 : 0))%24}:${minute}`;
+    }
+  }
+
+  // determine the view based on what's in the mesage
+    // as well as chat messages, we can get other types of notes from the server
+    // like a member joins the room, or changes their name, etc
+    function computeViewType({message, at, newUsername, username, disconnection, fromMe}) {
+
+      const viewType = 
+        disconnection ?                                       'note.disconnection' :
+        newUsername && username && username != newUsername ?  'note.nameChange' :
+        newUsername ?                                         'note.newMember' : 
+        message ?                                             'chat.message' :
+                                                              'log.unknownMessageType'
+      ;
+
+      // doing it here (rather than having the server do this) 
+      // as this decouples client view UI from server logic
+      // also also saves a bit of processing on the server
+      // We only save viewType to a message once it arrives, so we don't compute this on every re-render
+
+      return viewType;
+    }
+
