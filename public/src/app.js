@@ -1,14 +1,26 @@
-import {merge, update} from './b.js';
+// imports
+  import * as Views from './views.js';
+  import * as Config from './config.js';
+  import {
+    merge, 
+    update, 
+    clone, 
+    log, 
+    logError
+  } from './helpers.js';
 
 // declarations
-  // config constants
-    const SilenceLogs = true;
-    const InitialReconnectDelay = 1000;
-    const ExponentialBackoff = 1.618;
-    // right now we only use myCode for checking if a name update is ours 
-    const myCode = (Date.now()*Math.random()).toString(36);
+  // useful constants
+    const inlineEventHandlerFunctions = {
+      sendMessage, saveSettings
+    };
 
-  // app state constants 
+    const Routes = new Set([
+      'chat',
+      'settings'
+    ]);
+
+  // state constants 
     const DefaultSettings = {
       username: 'cris',
       colorscheme: 'light',
@@ -29,19 +41,9 @@ import {merge, update} from './b.js';
       }
     };
 
-    // log for errors
-    const Errors = [];
-
-  // global funcs for inline event handlers
-    const globalFuncs = {
-      sendMessage, saveSettings
-    };
-
-  // convenience for empty strings
-    const _ = '';
-
-  let reconnectDelay = InitialReconnectDelay;
-  let socket;
+  // module scoped variables
+    let reconnectDelay = Config.InitialReconnectDelay;
+    let socket;
 
 loadChatApp();
 
@@ -51,8 +53,11 @@ loadChatApp();
     addRouteHandler();
     installUnreadBlinker();
 
-    // global scope is accessible to inline event handlers
-    Object.assign(globalThis, globalFuncs);
+    Object.assign(self, inlineEventHandlerFunctions);
+    // Notes
+      // we will call these functions
+      // from inline event handlers (e.g <a onclick="...) 
+      // And to be accessible in those handlers, they needed to be in global scope
 
     // render existing route at startup
     drawRoute({newURL:location.href+''});
@@ -60,11 +65,11 @@ loadChatApp();
     connectToServer();
   }
 
-// save new state and draw the app
+// draw the app
   // main draw function
   function draw(newState = {}) {
     merge(State, clone(newState));
-    update(App, State);
+    update(Views.App, State);
 
     // logging new state can get lengthy
     // log({newState});
@@ -73,221 +78,20 @@ loadChatApp();
   // functions for rendering stuff outside <body>
     function drawTitle(newState = {}) {
       merge(State, clone(newState));
-      document.title = AppTitle(State);
+      document.title = Views.AppTitle(State);
     }
 
-    function drawLanguage(newState = {}) {
-      merge(State, clone(newState));
+    function drawLanguage() {
       document.documentElement.lang = State.settings.language;
     }
 
-    function drawColorScheme(newState = {}) {
+    function drawColorScheme(newSettings, oldSettings) {
       const doc = document.documentElement;
-      doc.classList.remove(State.settings.colorscheme);
-      merge(State, clone(newState));
-      doc.classList.add(State.settings.colorscheme);
+      if ( oldSettings ) {
+        doc.classList.remove(oldSettings.colorscheme);
+      }
+      doc.classList.add(newSettings.colorscheme);
     }
-
-// render different views
-  function App(state) {
-    let currentView;
-
-    switch(state.route) {
-      case 'chat':
-        currentView = Chat;
-        break;
-      case 'settings':
-        currentView = Settings;
-        break;
-      default:
-        currentView = Chat;
-        break;
-    }
-
-    return `
-      <article class=app>
-        <nav class=routes>
-          <ul>
-            <li><a href=#chat 
-              ${state.route == 'chat' ? 'class=active' : _}>Chat</a>
-            <li><a href=#settings 
-              ${state.route == 'settings' ? 'class=active' : _}>Settings</a>
-          </ul>
-        </nav>
-        <section class=current-view>
-        ${currentView(state)}
-        </section>
-      </article>
-    `
-  }
-
-  function Chat(state) {
-    focusComposer();
-
-    return `
-      <ul class=chat>
-        ${state.chat.messages.length ? 
-            state.chat.messages.map(msg => ChatMessage(msg)).join('\n') 
-          :
-            `<li class=room-note>No chat history</li>`
-        }
-      </ul>
-      <form class=messager onsubmit=sendMessage(event);>
-        <textarea required class=composer
-          aria-label="Message composer" 
-          autofocus 
-          name=message placeholder="Enter message"></textarea>
-        <button aria-label="Send message">Send</button>
-      </form>
-    `;
-  }
-
-  function ChatMessage({message, at, newUsername, username, disconnection, fromMe, viewType}) {
-    const fullTime = getClockTime(at, State.settings.timeformat);
-
-    switch(viewType) {
-      case 'note.nameChange':
-        return `
-          <li class=room-note> 
-            <p>${safe(username)} changed their name to ${safe(newUsername)}</p>
-            <div class=metadata>
-              <time datetime=${safe(at)}>${fullTime}</time>
-            </div>
-          </li>
-        `;
-      case 'note.newMember':
-        return `
-          <li class=room-note> 
-            <p>${safe(newUsername)} entered the room.</p>
-            <div class=metadata>
-              <time datetime=${safe(at)}>${fullTime}</time>
-            </div>
-          </li>
-        `;
-      case 'note.disconnection':
-        return `
-          <li class=room-note> 
-            <p>${safe(username)} left the room.</p>
-            <div class=metadata>
-              <time datetime=${safe(at)}>${fullTime}</time>
-            </div>
-          </li>
-        `;
-      case 'chat.message':
-        return `
-          <li class="message ${fromMe? 'from-me' : ''}">
-            <p>${safe(message)}</p>
-            <div class=metadata>
-              <cite rel=author>${safe(username)}</cite>
-              <time datetime=${safe(at)}>${fullTime}</time>
-            </div>
-          </li>
-        `;
-      case 'log.unknownMessageType':
-      default:
-        log({unknownMessageType: {message, at, newUsername, username, disconnection, fromMe, viewType}});
-        break;
-    }
-  }
-
-  function Settings(state) {
-    loadSettings();
-
-    const {settings: {
-      username,
-      colorscheme,
-      timeformat,
-      sendhotkey,
-      language
-    }} = state;
-    // convenience for form control boolean attributes
-    const C = 'checked', S = 'selected';
-
-    return `
-      <form id=settings class=settings onreset=saveSettings(event); onchange=saveSettings(event);>
-        <fieldset name=notification>
-          <legend>${state.view.saySettingsSaved ? 'Saved' : ''}</legend>
-          <p>
-            <label>
-              User name
-              <br>
-              <input type=text name=username placeholder="guest0001" value=${safe(username)}>
-            </label>
-          <p>
-            <label>
-              Interface color
-            </label>
-            <br>
-            <label>
-              <input type=radio name=colorscheme value=light 
-                ${colorscheme == 'light' ? C : _}>
-              Light
-            </label>
-            <label>
-              <input type=radio name=colorscheme value=dark 
-                ${colorscheme == 'dark' ? C : _}>
-              Dark
-            </label>
-          <p>
-            <label>
-              Clock display
-            </label>
-            <br>
-            <label>
-              <input type=radio name=timeformat value=ampm 
-                ${timeformat == 'ampm' ? C : _}>
-              12 Hours
-            </label>
-            <label>
-              <input type=radio name=timeformat value=military 
-                ${timeformat == 'military' ? C : _}>
-              24 Hours
-            </label>
-          <p>
-            <label> 
-              Send messages on <kbd>CTRL</kbd>+<kbd>ENTER</kbd>
-            </label>
-            <br>
-            <label>
-              <input type=radio name=sendhotkey value=ctrlsend 
-                ${sendhotkey == 'ctrlsend' ? C : _}>
-              On
-            </label>
-            <label>
-              <input type=radio name=sendhotkey value=none 
-                ${sendhotkey == 'none' ? C : _}>
-              Off
-            </label>
-          <p>
-            <label>
-              Language
-              <br>
-              <select name=language>
-                <option ${language == 'en' ? S : _} value=en>English</option>
-                <option ${language == 'zh' ? S : _} value=zh>Chinese</option>
-              </select>
-            </label>
-        </fieldset>
-      </form>
-      <button class=defaults type=reset form=settings>Reset to defaults</button>
-    `;
-
-    // note the values of language options need to be valid codes that can be applied to html.lang attribute 
-  }
-
-  function AppTitle (state) {
-    let title = 'Chat App Homework';
-
-    if ( state.route ) {
-      title += ` - ${state.route}`;
-    }
-
-    if ( state.view.showUnreadCount && state.chat.unreadCount ) {
-      title = `(${state.chat.unreadCount}) ` + title;
-    }
-
-    return title;
-  }
 
 // change route when hash fragment changes
   function addRouteHandler() {
@@ -296,22 +100,39 @@ loadChatApp();
 
   function drawRoute({newURL}) {
     const route = (new URL(newURL)).hash.slice(1);
+
+    if ( ! route || ! Routes.has(route) ) {
+      // chat is the default route
+      return location.hash = '#chat';
+    }
+
+    if ( route == 'settings' ) {
+      loadSettings();
+    }
+
     draw({route});
+    drawTitle();
+    // title also depends on the route
   }
 
 // communicate over websocket
   function connectToServer() {
     const ws = new WebSocket(`ws://${location.host}/`);
+
     ws.onmessage = receiveMessage;
+
     ws.onopen = () => {
       log({websocketConnected:ws.url});
-      send({code:myCode,newUsername:State.settings.username});
-      reconnectDelay = InitialReconnectDelay;
+      // let the server know we are here, and our preferred username
+      send({code:Config.myCode,newUsername:State.settings.username});
+      reconnectDelay = Config.InitialReconnectDelay;
     };
+
     ws.onclose = ws.onerror = c => {
       logError({message: 'No connection to server. Reconnecting...', event: c});
-      setTimeout(connectToServer, reconnectDelay *= ExponentialBackoff);
+      setTimeout(connectToServer, reconnectDelay *= Config.ExponentialBackoff);
     }
+
     socket = ws;
   }
 
@@ -337,17 +158,17 @@ loadChatApp();
     }
 
     // if server has updated my username to an unused one
-    if ( data.newUsername && data.automaticUpdate && data.code == myCode ) {
+    if ( data.newUsername && data.automaticUpdate && data.code == Config.myCode ) {
       // persist the new username it to my settings
       persist({username:data.newUsername});
     }
 
-    // messages with 'fromMe' true go on my side of the chat
+    // messages with 'fromMe' go on my side of the chat
     if ( data.username == State.settings.username ) {
       data.fromMe = true;
     }
 
-    // work out the format to display this message
+    // work out the format to display this message (and save it)
     data.viewType = computeViewType(data);
 
     draw({
@@ -356,12 +177,19 @@ loadChatApp();
   }
 
   function sendMessage(submission) {
-    submission.preventDefault();
-    const {message:{value:message}} = submission.target;
+    const {message:{value:message}} = submission.target.closest('form');
+
+    if ( submission.type == 'submit' ) {
+      submission.preventDefault();
+    }
 
     const data = {
       message
     };
+
+    if( data.message.trim().length == 0 ) {
+      return alert(`What would you like to say?`); 
+    }
 
     try {
       send(data);
@@ -391,20 +219,30 @@ loadChatApp();
       const formData = new FormData(event.currentTarget);
       const newSettings = {}; 
 
+      // Note
+        // <FormData>.entries() doesn't work on Edge 17, but does on Edge 18 
+        // Plus, Edge was not in the browser list for this homework
       for( const [key, value] of formData.entries() ) {
         newSettings[key] = value;
       }
 
-      // server accounts for usernames, so we need to send a change
-        if ( newSettings.username != State.settings.username ) {
-          send({code:myCode, newUsername: newSettings.username});
-        }
+      // fix empty username
+      if ( newSettings.username == '' ) {
+        logError({message:'Empty username'});
+        event.currentTarget.username.value = newSettings.username = Math.round((Date.now()*Math.random())%10000).toString(36)
+        alert(`Username can't be empty`);
+      }
 
-      persist(newSettings);
+      // server accounts for usernames, so we need to send a change
+      if ( newSettings.username != State.settings.username ) {
+        send({code:Config.myCode, newUsername: newSettings.username});
+      }
 
       // we don't use draw here because these use <html> tag, and draw only renders from <body>
-      drawColorScheme();
+      drawColorScheme(newSettings, State.settings);
       drawLanguage();
+
+      persist(newSettings);
 
       log({newSettings});
     }
@@ -429,10 +267,11 @@ loadChatApp();
       settings = clone(DefaultSettings);
     }
 
+    // we are loading settings so it's ok to overwrite
     Object.assign(State.settings, settings);
 
     // some settings we need to apply (they will not be drawn with render)
-    drawColorScheme();
+    drawColorScheme(State.settings);
     drawLanguage();
   }
 
@@ -441,19 +280,7 @@ loadChatApp();
     localStorage.setItem('app-settings', JSON.stringify(State.settings));
   }
 
-// UI behaviours 
-  // ensure textarea is focused
-  function focusComposer() {
-    // setTimeout ensures we wait until after render
-    setTimeout(() => {
-      const composer = document.querySelector('form.messager .composer'); 
-      if ( composer instanceof HTMLTextAreaElement && document.activeElement != composer ) {
-        // autofocus attribute fails in some cases including when hash fragment present
-        composer.focus();
-      }
-    }, 0);
-  }
-
+// title blinker
   function installUnreadBlinker() {
     let animate = false;
 
@@ -495,56 +322,10 @@ loadChatApp();
   }
 
 // helpers
-  function log(o) {
-    if ( SilenceLogs ) return;
-    console.log(JSON.stringify(o,null,2));
-  }
-
-  function logError(e) {
-    Errors.push(e);
-
-    if ( SilenceLogs ) return;
-
-    console.error(e.message);
-    console.info("Last error", e);
-  }
-
-  // mitigate XSS
-  function safe(s = '') {
-    return (s+'').replace(/"/g, '&quot;').replace(/>/g, '&gt;').replace(/</g, '&lt;');
-  }
-
   // is the chat view invisible?
   function messagesUnreadable() {
     return State.route != 'chat' || document.hidden;
   }
-
-  function clone(o) {
-    return JSON.parse(JSON.stringify(o));
-  }
-
-  // format timestamp into a 12 or 24 clock time 
-    function getClockTime(timestamp, mode) {
-      const dateAt = new Date(timestamp);
-      let hour = dateAt.getHours();
-      let minute = dateAt.getMinutes();
-      let hourStr, minuteStr, half = '';
-
-      if ( mode == 'ampm' ) {
-        half = 'AM';
-        if ( hour > 12 ) {
-          hour -= 12;
-          half = 'PM';
-        } else if ( hour == 12 ) {
-          half = 'PM';
-        }
-      }
-
-      hourStr = hour.toString().padStart(2, '0');
-      minuteStr = minute.toString().padStart(2, '0');
-
-      return `${hourStr}:${minuteStr} ${half}`;
-    }
 
   // when a message arrives determine the view to use
     function computeViewType({message, newUsername, username, disconnection}) {
@@ -558,6 +339,7 @@ loadChatApp();
 
       // if we had the server do this
       // client view logic and server logic would be coupled
+      // so we do it here
 
       return viewType;
     }

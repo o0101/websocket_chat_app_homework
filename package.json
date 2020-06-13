@@ -4,8 +4,8 @@
   "description": "simple chat app",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon -r esm index.js",
     "start": "node -r esm index.js",
+    "test": "nodemon -r esm index.js",
     "tests": "nodemon -r esm tests.js",
     "tscheck-client": "tsc --target ES2020 --checkJs --allowJs --outFile typetests/client.js --module System public/src/app.js",
     "tscheck-server": "tsc --target ES2020 --checkJs --allowJs --outFile typetests/server.js --module System index.js",
@@ -34,10 +34,12 @@
   "dependencies": {
     "esm": "^3.2.25",
     "express": "^4.17.1",
+    "helmet": "^3.23.0",
     "ws": "^7.3.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.6",
+    "@types/helmet": "0.0.47",
     "@types/node": "^14.0.13",
     "@types/ws": "^7.2.5",
     "eslint": "^7.2.0",

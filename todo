@@ -16,9 +16,9 @@ Stage 1 (necessary requirements)
   - DONE add css to fulfill minimal requirements (my message right, others messages left, responsive, landscape/portrait, light/dark mode)
   - DONE add title blinking effect if tab is not active
   - DONE test in Firefox, and Safari
+  - DONE add tests layer 1 (use typescript to check types)
 - add readme with features (required and optional sections)
-- add tests layer 1 (use typescript, types for message data (not message type), settings)
-- add tests layer 2 (basic unit tests, client: new message makes list longer by 1, server: new ws connection makes members longer by 1)
+- add tests layer 2 (basic unit tests as per issue)
 
 Stage 2 (my own improvement)
 [[DONE]]

@@ -1,71 +1,22 @@
-/* colorschemes */
-  :root.light, :root {
-    --neutral1: lavender;
-    --neutral2: darkslategrey;
-    --hl1: dodgerblue;
-    --hl2: aquamarine;
-    --notify1: lime;
-    --backg1: snow;
-    --backg2: white;
-    --backg3: burlywood;
-    --text1: black;
-    --text2: navy;
-  }
+@import url(theme.css);
 
-  :root.dark {
-    /*
-      I tried developing a 'dark color' scheme
-      but couldn't find one I liked.
-      Ended up simply using a CSS invert filter on the light scheme
-    */
-    filter: invert(1.0);
-  }
-
-/* theme base */
-  :root {
-    max-height: 100%;
-
-    --gap1: 0.5em;
-    --gap2: 1em;
-    --gap3: 0.25em;
-
-    --maxmessagewidth: min(500px, 61.8%);
-
-    --grad1: linear-gradient(to bottom, var(--hl1), var(--hl2));
-
-    color: var(--text1);
-    background: var(--backg2);
-
-    font: 16px/135% Helvetica, Arial, sans-serif;
-  }
-
-  input, select, textarea, option {
-    background: transparent;
-  }
-
-  input, select, textarea, button, option {
-    font: inherit;
-    color: inherit;
-    outline: none;
-    border: medium solid var(--neutral1);
-  }
-
-  input:focus, select:focus, textarea:focus, button:focus, option:focus,
-  input:active, select:active, textarea:active, button:active, option:active {
-    border: medium solid var(--hl1);
-  }
-
-  body {
-    box-sizing: border-box;
-    padding: var(--gap1);
+/* general element overrides */
+  ul {
+    display: flex;
+    padding-left: 0;
     margin: 0;
   }
 
-  :root, body, article.app {
-    height: 100%;
+  li {
+    display: inline-block;
+    padding: var(--gap3) var(--gap1);
+    margin: var(--gap1);
+    border: medium solid var(--neutral1);
+    box-shadow: 0 1px 1px var(--neutral1);
+    background: var(--backg1);
   }
 
-/* app */
+/* specific app components */
   article.app {
     display: grid;
     grid-template-areas:
@@ -104,113 +55,51 @@
       overflow: auto;
     }
 
-    /* lists and forms (main blocks of chat and settings) */
-      ul {
-        display: flex;
-        padding-left: 0;
-        margin: 0;
-      }
+  /* chat */
+    ul.chat, form.settings fieldset {
+      grid-area: scroller;
+      height: 100%;
+      max-height: 100%;
+      overflow: auto;
+      margin: 0;
+    }
 
-      ul.chat, form.settings fieldset {
-        grid-area: scroller;
-        height: 100%;
-        max-height: 100%;
-        overflow: auto;
-        margin: 0;
-      }
+    ul.chat {
+      flex-direction: column-reverse;
+      background: var(--grad1);
+    }
 
-      ul.chat {
-        flex-direction: column-reverse;
-        background: var(--grad1);
-      }
+    form.messager {
+      grid-area: footer;
+      display: flex;
+      margin: 0;
+    }
 
-      form.settings {
-        position: relative;
-        border: medium solid var(--hl1);
-      }
+    form.messager .composer {
+      flex-grow: 1;
+      padding: var(--gap3);
+      background: transparent;
+      resize: none;
+    }
 
-      fieldset {
-        max-height: 100%;
-        box-sizing: border-box;
-        border: 0;
-      }
+    .composer:focus, 
+    .composer:active {
+      border-color: var(--hl2);
+    }
 
-      /* we used fieldset legend as a handy notification spot */
-      fieldset legend {
-        position: fixed;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        padding: var(--gap3);
-        background: var(--notify1);
-      }
+    button {
+      background: var(--neutral1);
+    }
 
-      fieldset legend:empty {
-        display: none;
-      }
+  /* chat messages */
+    ul.chat li:last-of-type {
+      margin-bottom: var(--gap2);
+    }
 
-      ul.chat li:last-of-type {
-        margin-bottom: var(--gap2);
-      }
-
-      form.messager {
-        grid-area: footer;
-        display: flex;
-        margin: 0;
-      }
-
-      button.defaults {
-        text-align: center;
-      }
-
-      button {
-        background: var(--neutral1);
-      }
-
-      form.messager .composer {
-        flex-grow: 1;
-        padding: var(--gap3);
-        background: transparent;
-        resize: none;
-      }
-
-      label.a11y-only {
-      }
-
-      .composer:focus, 
-      .composer:active {
-        border-color: var(--hl2);
-      }
-
-    /* list items (main blocks of chat) */
-      li {
-        display: inline-block;
-        padding: var(--gap1);
-        margin: var(--gap1);
-        border: medium solid var(--neutral1);
-        box-shadow: 0 1px 1px var(--neutral1);
-        background: var(--backg1);
-      }
-
-      li p {
-        margin: var(--gap3);
-      }
-
-      li time {
-        font-size: x-small;
-        color: var(--text2);
-      }
-
-      li cite {
-        font-size: smaller;
-      }
-
+    /* message list item */
       li.message {
         max-width: var(--maxmessagewidth);
         align-self: start;
-      }
-
-      li div.metadata {
-        text-align: right;
       }
 
       li.room-note {
@@ -220,8 +109,65 @@
 
       li.from-me {
         align-self: flex-end;
-      }
-
-      li.from-me p {
         text-align: right;
       }
+
+    /* message components */
+      li div.metadata {
+        text-align: right;
+      }
+
+      li q {
+        display: inline-block;
+        quotes: none;
+      }
+
+      li q, li cite {
+        overflow-wrap: break-word;
+        hyphens: auto;
+        word-break: break-all;
+      }
+
+      li time {
+        color: var(--text2);
+        font-size: x-small;
+      }
+
+      li cite {
+        font-size: smaller;
+      }
+
+    /* specific class overrides */
+      li.from-me q {
+        text-align: right;
+      }
+
+  /* settings */
+    form.settings {
+      position: relative;
+      border: medium solid var(--hl1);
+    }
+
+    fieldset {
+      max-height: 100%;
+      box-sizing: border-box;
+      border: 0;
+    }
+
+    /* we used fieldset legend as a handy notification spot */
+    fieldset legend {
+      position: fixed;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: var(--gap3);
+      background: var(--notify1);
+    }
+
+    fieldset legend:empty {
+      display: none;
+    }
+
+    button.defaults {
+      text-align: center;
+    }
+
