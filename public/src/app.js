@@ -1,4 +1,4 @@
-import {update} from './b.js';
+import {merge, update} from './b.js';
 
 // declarations
   // config constants
@@ -20,10 +20,12 @@ import {update} from './b.js';
     const State = {
       settings: clone(DefaultSettings),
       chat: {
+        unreadCount: 0,
         messages: []
       },
       view : {
-        saySettingsSaved: false
+        saySettingsSaved: false,
+        showUnreadCount: false
       }
     };
 
@@ -35,6 +37,9 @@ import {update} from './b.js';
       sendMessage, saveSettings
     };
 
+  // convenience for empty strings
+    const _ = '';
+
   let reconnectDelay = InitialReconnectDelay;
   let socket;
 
@@ -42,24 +47,48 @@ loadChatApp();
 
 // start the app
   function loadChatApp() {
+    loadSettings();
+    addRouteHandler();
+    installUnreadBlinker();
+
     // global scope is accessible to inline event handlers
     Object.assign(globalThis, globalFuncs);
-    loadSettings();
-    addRouteHandlers();
-    // render any existing route at startup
-    self.onhashchange({newURL:location.href+''});
+
+    // render existing route at startup
+    drawRoute({newURL:location.href+''});
+
     connectToServer();
   }
 
-// save new state and draw it
+// save new state and draw the app
+  // main draw function
   function draw(newState = {}) {
+    merge(State, clone(newState));
+    update(App, State);
+
     // logging new state can get lengthy
     // log({newState});
-    Object.assign(State, clone(newState));
-    update(App, State);
   }
 
-// render different components
+  // functions for rendering stuff outside <body>
+    function drawTitle(newState = {}) {
+      merge(State, clone(newState));
+      document.title = AppTitle(State);
+    }
+
+    function drawLanguage(newState = {}) {
+      merge(State, clone(newState));
+      document.documentElement.lang = State.settings.language;
+    }
+
+    function drawColorScheme(newState = {}) {
+      const doc = document.documentElement;
+      doc.classList.remove(State.settings.colorscheme);
+      merge(State, clone(newState));
+      doc.classList.add(State.settings.colorscheme);
+    }
+
+// render different views
   function App(state) {
     let currentView;
 
@@ -80,9 +109,9 @@ loadChatApp();
         <nav class=routes>
           <ul>
             <li><a href=#chat 
-              class="${state.route == 'chat' ? 'active' : ''}">Chat</a>
+              ${state.route == 'chat' ? 'class=active' : _}>Chat</a>
             <li><a href=#settings 
-              class="${state.route == 'settings' ? 'active' : ''}">Settings</a>
+              ${state.route == 'settings' ? 'class=active' : _}>Settings</a>
           </ul>
         </nav>
         <section class=current-view>
@@ -94,7 +123,7 @@ loadChatApp();
 
   function Chat(state) {
     focusComposer();
-    scrollToLatest();
+
     return `
       <ul class=chat>
         ${state.chat.messages.length ? 
@@ -104,21 +133,25 @@ loadChatApp();
         }
       </ul>
       <form class=messager onsubmit=sendMessage(event);>
-        <textarea class=composer required autofocus name=message placeholder="Enter message"></textarea>
-        <button>Send</button>
+        <textarea required class=composer
+          aria-label="Message composer" 
+          autofocus 
+          name=message placeholder="Enter message"></textarea>
+        <button aria-label="Send message">Send</button>
       </form>
     `;
   }
 
   function ChatMessage({message, at, newUsername, username, disconnection, fromMe, viewType}) {
     const fullTime = getClockTime(at, State.settings.timeformat);
+
     switch(viewType) {
       case 'note.nameChange':
         return `
           <li class=room-note> 
             <p>${safe(username)} changed their name to ${safe(newUsername)}</p>
             <div class=metadata>
-              <time datetime=${at}>${fullTime}</time>
+              <time datetime=${safe(at)}>${fullTime}</time>
             </div>
           </li>
         `;
@@ -127,7 +160,7 @@ loadChatApp();
           <li class=room-note> 
             <p>${safe(newUsername)} entered the room.</p>
             <div class=metadata>
-              <time datetime=${at}>${fullTime}</time>
+              <time datetime=${safe(at)}>${fullTime}</time>
             </div>
           </li>
         `;
@@ -136,7 +169,7 @@ loadChatApp();
           <li class=room-note> 
             <p>${safe(username)} left the room.</p>
             <div class=metadata>
-              <time datetime=${at}>${fullTime}</time>
+              <time datetime=${safe(at)}>${fullTime}</time>
             </div>
           </li>
         `;
@@ -146,7 +179,7 @@ loadChatApp();
             <p>${safe(message)}</p>
             <div class=metadata>
               <cite rel=author>${safe(username)}</cite>
-              <time datetime=${at}>${fullTime}</time>
+              <time datetime=${safe(at)}>${fullTime}</time>
             </div>
           </li>
         `;
@@ -168,7 +201,7 @@ loadChatApp();
       language
     }} = state;
     // convenience for form control boolean attributes
-    const C = 'checked', S = 'selected', _ = '';
+    const C = 'checked', S = 'selected';
 
     return `
       <form id=settings class=settings onreset=saveSettings(event); onchange=saveSettings(event);>
@@ -178,7 +211,7 @@ loadChatApp();
             <label>
               User name
               <br>
-              <input type=text name=username placeholder="guest0001" value=${username}>
+              <input type=text name=username placeholder="guest0001" value=${safe(username)}>
             </label>
           <p>
             <label>
@@ -242,14 +275,28 @@ loadChatApp();
     // note the values of language options need to be valid codes that can be applied to html.lang attribute 
   }
 
+  function AppTitle (state) {
+    let title = 'Chat App Homework';
+
+    if ( state.route ) {
+      title += ` - ${state.route}`;
+    }
+
+    if ( state.view.showUnreadCount && state.chat.unreadCount ) {
+      title = `(${state.chat.unreadCount}) ` + title;
+    }
+
+    return title;
+  }
+
 // change route when hash fragment changes
-  function addRouteHandlers() {
-    self.onhashchange = ({newURL}) => {
-      const route = (new URL(newURL)).hash.slice(1);
-      draw({
-        route
-      });
-    };
+  function addRouteHandler() {
+    self.onhashchange = drawRoute;
+  }
+
+  function drawRoute({newURL}) {
+    const route = (new URL(newURL)).hash.slice(1);
+    draw({route});
   }
 
 // communicate over websocket
@@ -270,7 +317,24 @@ loadChatApp();
 
   function receiveMessage(messageEvent) {
     let {data} = messageEvent;
-    data = JSON.parse(data);
+
+    try {
+      data = JSON.parse(data);
+    } catch(e) {
+      logError({exception:e, data});
+      return;
+    }
+
+    if ( Number.isNaN(Number(data.at)) ) {
+      logError({badMessage:data});
+      return;
+    }
+
+    if ( messagesUnreadable() ) {
+      State.chat.unreadCount += 1;
+    } else {
+      State.chat.unreadCount = 0;
+    }
 
     // if server has updated my username to an unused one
     if ( data.newUsername && data.automaticUpdate && data.code == myCode ) {
@@ -286,9 +350,9 @@ loadChatApp();
     // work out the format to display this message
     data.viewType = computeViewType(data);
 
-    draw({chat:{
-      messages: State.chat.messages.concat([data]) 
-    }});
+    draw({
+      'chat.messages': [data].concat(State.chat.messages)
+    });
   }
 
   function sendMessage(submission) {
@@ -331,72 +395,103 @@ loadChatApp();
         newSettings[key] = value;
       }
 
-      log({newSettings});
-
       // server accounts for usernames, so we need to send a change
         if ( newSettings.username != State.settings.username ) {
           send({code:myCode, newUsername: newSettings.username});
         }
 
-      // we don't use draw here because these use <html> tag, and draw only renders from <body>
-        if ( newSettings.colorscheme != State.settings.colorscheme ) {
-          const doc = document.documentElement;
-          doc.classList.remove(State.settings.colorscheme);
-          doc.classList.add(newSettings.colorscheme);
-        }
-
-        if ( newSettings.language != State.settings.language ) {
-          const doc = document.documentElement;
-          doc.lang = newSettings.language;
-        }
-
       persist(newSettings);
+
+      // we don't use draw here because these use <html> tag, and draw only renders from <body>
+      drawColorScheme();
+      drawLanguage();
+
+      log({newSettings});
     }
 
-    // note that settings are saved
-    draw({view:{saySettingsSaved: true}});
-    setTimeout(() => draw({view:{saySettingsSaved: false}}), 1618);
-  }
-
-  function persist(newSettings) {
-    Object.assign(State.settings, newSettings);
-    localStorage.setItem('app-settings', JSON.stringify(State.settings));
+    draw({'view.saySettingsSaved': true});
+    setTimeout(() => draw({'view.saySettingsSaved': false}), 1618);
   }
 
   function loadSettings() {
-    let settings = localStorage.getItem('app-settings');
-    if ( ! settings ) {
-      settings = DefaultSettings; 
-    } else {
-      settings = JSON.parse(settings);
+    const storedSettings = localStorage.getItem('app-settings');
+    let settings;
+    
+    if ( storedSettings ) {
+      try {
+        settings = JSON.parse(storedSettings);
+      } catch(e) {
+        logError({storedSettings, exception:e});
+      }
     }
-    Object.assign(State.settings, clone(settings));
+
+    if ( ! settings ) {
+      settings = clone(DefaultSettings);
+    }
+
+    Object.assign(State.settings, settings);
 
     // some settings we need to apply (they will not be drawn with render)
-    document.documentElement.classList.add(State.settings.colorscheme);
-    document.documentElement.lang = State.settings.language;
+    drawColorScheme();
+    drawLanguage();
   }
 
-// focus message composer and scroll to latest message
+  function persist(newSettings) {
+    merge(State.settings, newSettings);
+    localStorage.setItem('app-settings', JSON.stringify(State.settings));
+  }
+
+// UI behaviours 
   // ensure textarea is focused
   function focusComposer() {
     // setTimeout ensures we wait until after render
     setTimeout(() => {
       const composer = document.querySelector('form.messager .composer'); 
-      if ( !!composer && document.activeElement != composer ) {
+      if ( composer instanceof HTMLTextAreaElement && document.activeElement != composer ) {
         // autofocus attribute fails in some cases including when hash fragment present
         composer.focus();
       }
     }, 0);
   }
 
-  function scrollToLatest() {
-    setTimeout(() => {
-      const latest = document.querySelector('ul.chat li:last-of-type'); 
-      if ( latest ) {
-        latest.scrollIntoView();
+  function installUnreadBlinker() {
+    let animate = false;
+
+    document.onvisibilitychange = animateTitle;
+    self.addEventListener('hashchange', animateTitle);
+
+    animateTitle();
+    
+    function animateTitle() {
+      if ( messagesUnreadable() ) {
+        animate = true;
+        showUnreadInTitle();
+      } else {
+        animate = false; 
+        drawTitle({
+          'chat.unreadCount' : 0,
+          'view.showUnreadCount' : false
+        });
       }
-    }, 0);
+    }
+
+    function showUnreadInTitle() {
+      if ( State.chat.unreadCount ) {
+        drawTitle({'view.showUnreadCount': true});
+      }
+      if ( animate ) {
+        setTimeout(clearUnreadFromTitle, 1000);
+      }
+    }
+
+    function clearUnreadFromTitle() {
+      if ( State.view.showUnreadCount ) {
+        drawTitle({'view.showUnreadCount': false});
+      }
+      if ( animate ) {
+        setTimeout(showUnreadInTitle, 500);
+      }
+    }
   }
 
 // helpers
@@ -414,8 +509,14 @@ loadChatApp();
     console.info("Last error", e);
   }
 
+  // mitigate XSS
   function safe(s = '') {
-    return s.replace(/"/g, '&quot;').replace(/>/g, '&gt;').replace(/</g, '&lt;');
+    return (s+'').replace(/"/g, '&quot;').replace(/>/g, '&gt;').replace(/</g, '&lt;');
+  }
+
+  // is the chat view invisible?
+  function messagesUnreadable() {
+    return State.route != 'chat' || document.hidden;
   }
 
   function clone(o) {
@@ -425,15 +526,24 @@ loadChatApp();
   // format timestamp into a 12 or 24 clock time 
     function getClockTime(timestamp, mode) {
       const dateAt = new Date(timestamp);
-      const time = dateAt.toLocaleTimeString(navigator.language, {timeStyle:'short'}).trim();
-      const [clockTime, half] = time.split(/\s+/g);
-      const [hour,minute] = clockTime.split(/:/g);
+      let hour = dateAt.getHours();
+      let minute = dateAt.getMinutes();
+      let hourStr, minuteStr, half = '';
 
       if ( mode == 'ampm' ) {
-        return `${hour}:${minute} ${half}`;
-      } else {
-        return `${(parseInt(hour) + (half == 'PM' ? 12 : 0))%24}:${minute}`;
+        half = 'AM';
+        if ( hour > 12 ) {
+          hour -= 12;
+          half = 'PM';
+        } else if ( hour == 12 ) {
+          half = 'PM';
+        }
       }
+
+      hourStr = hour.toString().padStart(2, '0');
+      minuteStr = minute.toString().padStart(2, '0');
+
+      return `${hourStr}:${minuteStr} ${half}`;
     }
 
   // when a message arrives determine the view to use

@@ -1,8 +1,9 @@
 /* colorschemes */
-  :root.light {
+  :root.light, :root {
     --neutral1: lavender;
     --neutral2: darkslategrey;
-    --grad1: linear-gradient(to bottom, dodgerblue, aquamarine);
+    --hl1: dodgerblue;
+    --hl2: aquamarine;
     --notify1: lime;
     --backg1: snow;
     --backg2: white;
@@ -12,40 +13,57 @@
   }
 
   :root.dark {
-    --neutral1: navy;
-    --neutral2: darkslategrey;
-    --grad1: linear-gradient(to bottom, teal, midnightblue);
-    --notify1: lime;
-    --backg1: darkslategrey;
-    --backg2: black;
-    --backg3: navy;
-    --text1: lime;
-    --text2: darkorange;
+    /*
+      I tried developing a 'dark color' scheme
+      but couldn't find one I liked.
+      Ended up simply using a CSS invert filter on the light scheme
+    */
+    filter: invert(1.0);
   }
 
 /* theme base */
-    :root {
-      max-height: 100%;
+  :root {
+    max-height: 100%;
 
-      --gap1: 0.5em;
-      --gap2: 1em;
-      --gap3: 0.25em;
+    --gap1: 0.5em;
+    --gap2: 1em;
+    --gap3: 0.25em;
 
-      --maxmessagewidth: 500px;
+    --maxmessagewidth: min(500px, 61.8%);
 
-      color: var(--text1);
-      background: var(--backg2);
-    }
+    --grad1: linear-gradient(to bottom, var(--hl1), var(--hl2));
 
-    body {
-      box-sizing: border-box;
-      padding: var(--gap1);
-      margin: 0;
-    }
+    color: var(--text1);
+    background: var(--backg2);
 
-    :root, body, article.app {
-      height: 100%;
-    }
+    font: 16px/135% Helvetica, Arial, sans-serif;
+  }
+
+  input, select, textarea, option {
+    background: transparent;
+  }
+
+  input, select, textarea, button, option {
+    font: inherit;
+    color: inherit;
+    outline: none;
+    border: medium solid var(--neutral1);
+  }
+
+  input:focus, select:focus, textarea:focus, button:focus, option:focus,
+  input:active, select:active, textarea:active, button:active, option:active {
+    border: medium solid var(--hl1);
+  }
+
+  body {
+    box-sizing: border-box;
+    padding: var(--gap1);
+    margin: 0;
+  }
+
+  :root, body, article.app {
+    height: 100%;
+  }
 
 /* app */
   article.app {
@@ -93,7 +111,7 @@
         margin: 0;
       }
 
-      ul.chat, form.settings fieldset:first-of-type {
+      ul.chat, form.settings fieldset {
         grid-area: scroller;
         height: 100%;
         max-height: 100%;
@@ -102,13 +120,13 @@
       }
 
       ul.chat {
-        flex-direction: column;
+        flex-direction: column-reverse;
         background: var(--grad1);
       }
 
       form.settings {
         position: relative;
-        border: thin solid var(--neutral2);
+        border: medium solid var(--hl1);
       }
 
       fieldset {
@@ -117,12 +135,12 @@
         border: 0;
       }
 
+      /* we used fieldset legend as a handy notification spot */
       fieldset legend {
         position: fixed;
-        padding: var(--gap3);
-        border-radius: var(--gap1);
         left: 50%;
-        transform: translate(-var(--gap2), -50%);
+        transform: translate(-50%, -50%);
+        padding: var(--gap3);
         background: var(--notify1);
       }
 
@@ -146,7 +164,6 @@
 
       button {
         background: var(--neutral1);
-        border: thin solid var(--neutral1);
       }
 
       form.messager .composer {
@@ -154,16 +171,14 @@
         padding: var(--gap3);
         background: transparent;
         resize: none;
-        outline: none;
       }
 
-      .composer {
-        border: thin solid var(--neutral1);
+      label.a11y-only {
       }
 
       .composer:focus, 
       .composer:active {
-        border: thin solid var(--text1);
+        border-color: var(--hl2);
       }
 
     /* list items (main blocks of chat) */
@@ -171,8 +186,7 @@
         display: inline-block;
         padding: var(--gap1);
         margin: var(--gap1);
-        border-radius: var(--gap1);
-        border: thin solid var(--neutral1);
+        border: medium solid var(--neutral1);
         box-shadow: 0 1px 1px var(--neutral1);
         background: var(--backg1);
       }

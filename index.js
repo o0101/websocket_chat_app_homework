@@ -15,7 +15,7 @@
     const SILENT = false;
     const DEFAULT_PORT = 8080;
     const PORT = process.env.LSD_PORT || Number(process.argv[2] || DEFAULT_PORT);
-    const APP_ROOT = path.dirname(path.resolve(process.mainModule.filename));
+    const APP_ROOT = path.dirname(path.resolve(require.main.filename));
 
   // room constants
     const Members = new Set();
@@ -72,7 +72,12 @@ if ( weAreMainModule() ) {
     // receive and broadcast all messages
     function broadcast(data, ip, id) {
       if ( typeof data == "string" ) {
-        data = JSON.parse(data);
+        try {
+          data = JSON.parse(data);
+        } catch(e) {
+          log({exception:e,data});      
+          return;
+        }
       }
 
       data.at = Date.now();
@@ -91,7 +96,7 @@ if ( weAreMainModule() ) {
         try {
           connection.ws.send(JSON.stringify(data)); 
         } catch(e) {
-          close(connection);
+          leaveRoom(connection);
         }
       });
     }
