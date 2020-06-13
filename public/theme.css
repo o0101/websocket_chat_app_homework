@@ -23,8 +23,6 @@
 
 /* theme base */
   :root {
-    max-height: 100%;
-
     --gap1: 0.5em;
     --gap2: 1em;
     --gap3: 0.25em;
@@ -37,6 +35,10 @@
     background: var(--backg2);
 
     font: 16px/135% Helvetica, Arial, sans-serif;
+  }
+
+  :root {
+    max-height: 100%;
   }
 
   :root, body, article.app {

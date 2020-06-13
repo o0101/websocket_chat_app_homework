@@ -65,7 +65,7 @@
   }
 
 // rendering helpers
-  function toDOM(markup) {
+  export function toDOM(markup) {
     return parser.parseFromString(markup, 'text/html');
   }
 
@@ -82,10 +82,10 @@
 
     while(true) {
       const active = document.activeElement;
-      let selectionStart,selectionEnd;
+      let selectionStart,selectionEnd,value;
 
-      if ( active && active instanceof HTMLInputElement ) {
-        ({selectionStart,selectionEnd} = active);
+      if ( active && (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) ) {
+        ({selectionStart,selectionEnd,value} = active);
       }
 
       yield;
@@ -94,6 +94,9 @@
         const newActive = document.querySelector(imperfectlyGetSelector(active));
         if ( newActive ) {
           newActive.focus();
+          if ( !! value ) {
+            newActive.value = value;
+          }
           try {
             Object.assign(newActive,{selectionStart,selectionEnd});
           } catch(e) {}

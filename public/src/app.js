@@ -4,6 +4,7 @@
   import {
     merge, 
     update, 
+    toDOM,
     clone, 
     log, 
     logError
@@ -146,11 +147,6 @@ loadChatApp();
       return;
     }
 
-    if ( Number.isNaN(Number(data.at)) ) {
-      logError({badMessage:data});
-      return;
-    }
-
     if ( messagesUnreadable() ) {
       State.chat.unreadCount += 1;
     } else {
@@ -171,13 +167,36 @@ loadChatApp();
     // work out the format to display this message (and save it)
     data.viewType = computeViewType(data);
 
-    draw({
-      'chat.messages': [data].concat(State.chat.messages)
+    // we can't redraw the whole view here
+    // because messages might come too fast, 
+    // and our simple render process is too slow
+    // so the fast updates will break textarea input
+    // so instead we just merge state
+    merge(State, {
+      'chat.messages': State.chat.messages.concat([data])
     });
+
+    // and then create a single message view
+    const messageDom = toDOM(Views.ChatMessage(data)).querySelector('li');
+    // and insert it into the list
+    const list = document.querySelector('ul.chat');
+    list.insertAdjacentElement('beforeEnd', messageDom);
+
+    // even tho this breaks our notion 'render the whole tree at once'
+    // it works well for performance
+
+    Views.focusComposer();
+
+    // if we're roughly in the last 'page' of scrolled messages
+    if ( (list.scrollHeight - list.scrollTop) <= 1.618*list.clientHeight ) {
+      // bring the latest into view
+      messageDom.scrollIntoView();
+    } // otherwise we might be scrolling back into history and don't want to be jolted
   }
 
   function sendMessage(submission) {
-    const {message:{value:message}} = submission.target.closest('form');
+    const form = submission.target.closest('form'); 
+    const {message:{value:message}} = form;
 
     if ( submission.type == 'submit' ) {
       submission.preventDefault();
@@ -193,6 +212,7 @@ loadChatApp();
 
     try {
       send(data);
+      form.message.value = '';
     } catch(e) {
       logError({message:`Error sending message`, data, exception:e});
     }
@@ -207,17 +227,19 @@ loadChatApp();
     if ( event.type == 'submit' || event.type == 'reset' ) {
       event.preventDefault();
     } 
+
+    let newSettings;
     
     if ( event.type == 'reset' ) {
       const proceed = globalThis.APP_TESTING || confirm(`This resets your settings to defaults. Are you sure?`);
       if ( proceed ) {
-        persist(clone(DefaultSettings)); 
+        newSettings = clone(DefaultSettings);
       } else {
         return;
       }
     } else {
       const formData = new FormData(event.currentTarget);
-      const newSettings = {}; 
+      newSettings = {};
 
       // Note
         // <FormData>.entries() doesn't work on Edge 17, but does on Edge 18 
@@ -232,21 +254,21 @@ loadChatApp();
         event.currentTarget.username.value = newSettings.username = Math.round((Date.now()*Math.random())%10000).toString(36)
         alert(`Username can't be empty`);
       }
-
-      // server accounts for usernames, so we need to send a change
-      if ( newSettings.username != State.settings.username ) {
-        send({code:Config.myCode, newUsername: newSettings.username});
-      }
-
-      // we don't use draw here because these use <html> tag, and draw only renders from <body>
-      drawColorScheme(newSettings, State.settings);
-      drawLanguage();
-
-      persist(newSettings);
-
-      log({newSettings});
     }
 
+    // server accounts for usernames, so we need to send a change
+    if ( newSettings.username != State.settings.username ) {
+      send({code:Config.myCode, newUsername: newSettings.username});
+    }
+
+    log({newSettings});
+
+    drawLanguage();
+    drawColorScheme(newSettings, State.settings);
+
+    persist(newSettings);
+
+    // say we saved settings
     draw({'view.saySettingsSaved': true});
     setTimeout(() => draw({'view.saySettingsSaved': false}), 1618);
   }
@@ -328,19 +350,19 @@ loadChatApp();
   }
 
   // when a message arrives determine the view to use
-    function computeViewType({message, newUsername, username, disconnection}) {
-      const viewType = 
-        disconnection ?                                       'note.disconnection' :
-        newUsername && username && username != newUsername ?  'note.nameChange' :
-        newUsername ?                                         'note.newMember' : 
-        message ?                                             'chat.message' :
-                                                              'log.unknownMessageType'
-      ;
+  function computeViewType({message, newUsername, username, disconnection}) {
+    const viewType = 
+      disconnection ?                                       'note.disconnection' :
+      newUsername && username && username != newUsername ?  'note.nameChange' :
+      newUsername ?                                         'note.newMember' : 
+      message ?                                             'chat.message' :
+                                                            'log.unknownMessageType'
+    ;
 
-      // if we had the server do this
-      // client view logic and server logic would be coupled
-      // so we do it here
+    // if we had the server do this
+    // client view logic and server logic would be coupled
+    // so we do it here
 
-      return viewType;
-    }
+    return viewType;
+  }
 

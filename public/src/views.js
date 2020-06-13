@@ -24,9 +24,7 @@
               ${state.route == 'settings' ? 'class=active' : _}>Settings</a>
           </ul>
         </nav>
-        <section class=current-view>
         ${currentView(state)}
-        </section>
       </article>
     `
   }
@@ -42,11 +40,9 @@
 
     return `
       <ul class=chat>
-        ${state.chat.messages.length ? 
-            state.chat.messages.map(msg => ChatMessage(msg, state.settings.timeformat)).join('\n') 
-          :
-            `<li class=room-note><q cite=acct:app@client>No chat history</q></li>`
-        }
+      ${state.chat.messages.map(msg => 
+        ChatMessage(msg, state.settings.timeformat)
+      ).join('\n')}
       </ul>
       <form class=messager onsubmit=sendMessage(event); ${sendhotkey}>
         <textarea required class=composer
@@ -59,7 +55,7 @@
     `;
   }
 
-  function ChatMessage({message, at, newUsername, username, memberCount, disconnection, fromMe, viewType}, timeformat) {
+  export function ChatMessage({message, at, newUsername, username, memberCount, disconnection, fromMe, viewType}, timeformat) {
     const iso8601 = new Date(at).toISOString();
     const fullTime = getClockTime(at, timeformat);
 
@@ -219,7 +215,7 @@
   // Notes
     // This fixes unreliable autofocus attribute to ensure message composer is focused
     // autofocus attribute fails in some cases including when hash fragment present
-  function focusComposer() {
+  export function focusComposer() {
     setTimeout(() => {
       const composer = document.querySelector('form.messager .composer'); 
       if ( composer instanceof HTMLTextAreaElement && document.activeElement != composer ) {
