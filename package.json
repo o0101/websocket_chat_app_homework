@@ -10,7 +10,9 @@
     "tscheck-client": "tsc --target ES2020 --checkJs --allowJs --outFile typetests/client.js --module System public/src/app.js",
     "tscheck-server": "tsc --target ES2020 --checkJs --allowJs --outFile typetests/server.js --module System index.js",
     "tscheck": "npm run tscheck-server && npm run tscheck-client",
-    "clean": "rm -rf typetests && rm -rf node_modules && npm i"
+    "lint": "npx eslint index.js && npx eslint public/src/app.js",
+    "clean": "rm -rf typetests && rm -rf node_modules && npm i",
+    "check": "npm run tscheck && npm run lint"
   },
   "repository": {
     "type": "git",
@@ -38,7 +40,7 @@
     "@types/express": "^4.17.6",
     "@types/node": "^14.0.13",
     "@types/ws": "^7.2.5",
-    "jslint": "^0.12.1",
+    "eslint": "^7.2.0",
     "nodemon": "^2.0.4",
     "typescript": "^3.9.5"
   }

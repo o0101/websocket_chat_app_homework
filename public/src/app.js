@@ -303,7 +303,7 @@ loadChatApp();
   function connectToServer() {
     const ws = new WebSocket(`ws://${location.host}/`);
     ws.onmessage = receiveMessage;
-    ws.onopen = c => {
+    ws.onopen = () => {
       log({websocketConnected:ws.url});
       send({code:myCode,newUsername:State.settings.username});
       reconnectDelay = InitialReconnectDelay;
@@ -547,7 +547,7 @@ loadChatApp();
     }
 
   // when a message arrives determine the view to use
-    function computeViewType({message, at, newUsername, username, disconnection, fromMe}) {
+    function computeViewType({message, newUsername, username, disconnection}) {
       const viewType = 
         disconnection ?                                       'note.disconnection' :
         newUsername && username && username != newUsername ?  'note.nameChange' :
