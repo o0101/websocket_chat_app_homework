@@ -2,7 +2,7 @@ import {update} from './b.js';
 
 // declarations
   // config constants
-    const SilenceLogs = false;
+    const SilenceLogs = true;
     const InitialReconnectDelay = 1000;
     const ExponentialBackoff = 1.618;
     // right now we only use myCode for checking if a name update is ours 
@@ -104,7 +104,7 @@ loadChatApp();
         }
       </ul>
       <form class=messager onsubmit=sendMessage(event);>
-        <textarea class=composer autofocus name=message placeholder="Enter message"></textarea>
+        <textarea class=composer required autofocus name=message placeholder="Enter message"></textarea>
         <button>Send</button>
       </form>
     `;
@@ -262,7 +262,7 @@ loadChatApp();
       reconnectDelay = InitialReconnectDelay;
     };
     ws.onclose = ws.onerror = c => {
-      logError('No connection to server. Reconnecting...');
+      logError({message: 'No connection to server. Reconnecting...', event: c});
       setTimeout(connectToServer, reconnectDelay *= ExponentialBackoff);
     }
     socket = ws;
@@ -302,8 +302,7 @@ loadChatApp();
     try {
       send(data);
     } catch(e) {
-      alert('Error sending message');
-      console.warn(e);
+      logError({message:`Error sending message`, data, exception:e});
     }
   }
 
@@ -318,7 +317,8 @@ loadChatApp();
     } 
     
     if ( event.type == 'reset' ) {
-      if ( confirm(`This resets your settings to defaults. Are you sure?`) ) {
+      const proceed = globalThis.APP_TESTING || confirm(`This resets your settings to defaults. Are you sure?`);
+      if ( proceed ) {
         persist(clone(DefaultSettings)); 
       } else {
         return;
@@ -407,9 +407,11 @@ loadChatApp();
 
   function logError(e) {
     Errors.push(e);
-    if ( ! globalThis.APP_TESTING ) {
-      alert(e);
-    }
+
+    if ( SilenceLogs ) return;
+
+    console.error(e.message);
+    console.info("Last error", e);
   }
 
   function safe(s = '') {
