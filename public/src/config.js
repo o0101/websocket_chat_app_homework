@@ -1,4 +1,5 @@
 // config constants
+  export const APP_TESTING = location.pathname.startsWith('/runtests');
   export const SilenceLogs = true;
   export const InitialReconnectDelay = 1000;
   export const ExponentialBackoff = 1.618;

@@ -1,7 +1,6 @@
 import {sleep} from './helpers.js';
 
-export default async function run() {
-  const TOTAL = 50;
+export default async function run(TOTAL) {
   const sockets = [];
   let disconnects = 0;
   let current = 0;

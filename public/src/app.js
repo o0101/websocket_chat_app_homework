@@ -70,24 +70,43 @@ loadChatApp();
   // main draw function
   function draw(newState = {}) {
     merge(State, clone(newState));
+
     update(Views.App, State);
 
-    // restore scroll position if needed
-    if ( State.route == 'chat' ) {
-      const list = document.querySelector('ul.chat');
-      console.log(list.scrollTop, State.view.chatScrollTop);
-      list.scrollTop = State.view.chatScrollTop == undefined ? list.scrollHeight : State.view.chatScrollTop;
-    }
+    // restore chat scroll position after route change
+    drawScrollPosition();
   }
 
-  // functions for rendering stuff outside <body>
+  // functions for rendering stuff outside <body>, or stuff that is not an Element
     function drawTitle(newState = {}) {
       merge(State, clone(newState));
       document.title = Views.AppTitle(State);
     }
 
+    function drawLatestMessage() {
+      if ( State.route == 'chat' ) {
+        const data = State.chat.messages[State.chat.messages.length-1];
+        const list = document.querySelector('ul.chat');
+        const messageDom = toDOM(Views.ChatMessage(data)).querySelector('li');
+
+        list.insertAdjacentElement('beforeend', messageDom);
+
+        if ( data.fromMe || (list.scrollHeight - list.scrollTop) <= 1.618*list.clientHeight ) {
+          setTimeout(() => messageDom.scrollIntoView(), 0);
+          // the timeout ensures that we scroll into view after any IME is opened
+        }
+      }
+    }
+
     function drawLanguage() {
       document.documentElement.lang = State.settings.language;
+    }
+
+    function drawScrollPosition() {
+      if ( State.route == 'chat' ) {
+        const list = document.querySelector('ul.chat');
+        list.scrollTop = State.view.chatScrollTop == undefined ? list.scrollHeight : State.view.chatScrollTop;
+      }
     }
 
     function drawColorScheme(newSettings, oldSettings) {
@@ -176,36 +195,13 @@ loadChatApp();
     // work out the format to display this message (and save it)
     data.viewType = computeViewType(data);
 
-    // we can't redraw the whole view here
-    // because messages might come too fast, 
-    // and our simple render process is too slow
-    // so the fast updates will break textarea input
-    // so instead we just merge state
     merge(State, {
       'chat.messages': State.chat.messages.concat([data])
     });
 
-    // and then if we're in chat view
-    if ( State.route == 'chat' ) {
-      // and then create a single message view
-      const messageDom = toDOM(Views.ChatMessage(data)).querySelector('li');
-      // and insert it into the list
-      const list = document.querySelector('ul.chat');
-      list.insertAdjacentElement('beforeEnd', messageDom);
-      // even tho this breaks our notion 'render the whole tree at once'
-      // it works well for performance
-
-      // scroll the latest into view
-      // if it's from us OR
-      // if we're not somewhere above the 'last page' of scrolled messages
-      if ( data.fromMe || (list.scrollHeight - list.scrollTop) <= 1.618*list.clientHeight ) {
-        // bring the latest into view
-        console.log('scroll into view');
-        messageDom.scrollIntoView();
-      }
-
-      Views.focusComposer();
-    }
+    // even tho drawing a single message breaks our notion 'render the whole tree at once'
+    // it works well for performance and prevents textarea input bugs
+    drawLatestMessage();
   }
 
   function sendMessage(submission) {
@@ -221,7 +217,10 @@ loadChatApp();
     };
 
     if( data.message.trim().length == 0 ) {
-      return alert(`What would you like to say?`); 
+      if ( ! Config.APP_TESTING ) {
+        alert(`What would you like to say?`); 
+      }
+      return;
     }
 
     try {
@@ -242,18 +241,15 @@ loadChatApp();
       event.preventDefault();
     } 
 
-    let newSettings;
+    let newSettings = clone(DefaultSettings);
     
     if ( event.type == 'reset' ) {
-      const proceed = globalThis.APP_TESTING || confirm(`This resets your settings to defaults. Are you sure?`);
-      if ( proceed ) {
-        newSettings = clone(DefaultSettings);
-      } else {
-        return;
+      if ( ! Config.APP_TESTING ) {
+        const proceed = confirm(`This resets your settings to defaults. Are you sure?`);
+        if ( ! proceed ) return;
       }
     } else {
       const formData = new FormData(event.currentTarget);
-      newSettings = {};
 
       // Note
         // <FormData>.entries() doesn't work on Edge 17, but does on Edge 18 
@@ -266,7 +262,9 @@ loadChatApp();
       if ( newSettings.username == '' ) {
         logError({message:'Empty username'});
         event.currentTarget.username.value = newSettings.username = Math.round((Date.now()*Math.random())%10000).toString(36)
-        alert(`Username can't be empty`);
+        if ( ! Config.APP_TESTING ) {
+          alert(`Username can't be empty`);
+        }
       }
     }
 

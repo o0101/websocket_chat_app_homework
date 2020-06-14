@@ -32,14 +32,25 @@ Alternately, [see the demo](http://boogeh.com)
 
 # Things that are different
 
-- No optional features. My focus was keeping it simple.
-- No React. No framework at all. I requested this and it was okayed.
-- No need for CSS preprocessors (CSS here is very simple).
-- No need for TypeScript. I used `tsc --checkJs` to check for issues and fixed any. 
-- No need for state management. 
+- No optional features. My focus is keeping it simple.
+- No React, no framework at all. I requested this and it was okayed.
+- No CSS preprocessors. CSS here is very simple.
+- No TypeScript. I used `tsc --checkJs` to check for issues and fixed any. 
+- No complex state management. 
+
+# Development Philosophy
+
+In this project I tried to do the following things:
+
+- Keep it simple
+- Merge state updates into a single state object and render the whole view tree from that on every change.
 
 # Development Notes
 
+- The simple render (like immediate mode GUI) that I use here had some issues at high refresh rates.
+- If messages arrived quickly, and you were typing your own message, then because the textarea was being replaced at every render,
+often your keystrokes for input were getting lost. To solve this, I broke the 'render the whole tree' when we receive a message, 
+and instead just insert the message to the end of the `<ul>`
 - Most bugs that occured were not type related bugs but due to cross-browser differnces in CSS, layout.
 - Adding explicit types would only take more typing and lengthen this homework assignment for no good reason. 
 - Adding React would also be unnecessary. This is a simple app, with small components and only 2 routes. There's no need for added complexity. Also, it was related to me that 'no framework would be best IMO'.

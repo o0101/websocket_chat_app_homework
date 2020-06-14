@@ -1,7 +1,6 @@
 import {sleep} from './helpers.js';
 
-export default async function run() {
-  const TOTAL = 100;
+export default async function run(TOTAL) {
   const MESSAGE_CONTENT = 'Hello there you have a wonderful beautiful day.'
   let received = 0;
   let resolve;

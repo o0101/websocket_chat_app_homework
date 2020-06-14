@@ -19,8 +19,10 @@
         <nav class=routes>
           <ul>
             <li><a href=#chat 
+              accesskey=o
               ${state.route == 'chat' ? 'class=active' : _}>Chat</a>
             <li><a href=#settings 
+              accesskey=p
               ${state.route == 'settings' ? 'class=active' : _}>Settings</a>
           </ul>
         </nav>
@@ -36,8 +38,6 @@
       sendhotkey = `onkeypress="event.code == 'Enter' && event.ctrlKey && sendMessage(event);"`;
     }
 
-    focusComposer();
-
     return `
       <ul class=chat>
       ${state.chat.messages.map(msg => 
@@ -47,7 +47,6 @@
       <form class=messager onsubmit=sendMessage(event); ${sendhotkey}>
         <textarea required class=composer
           aria-label="Message composer" 
-          autofocus 
           maxlength=1200
           name=message placeholder="Enter message"></textarea>
         <button aria-label="Send message">Send</button>
@@ -128,7 +127,7 @@
             <label>
               User name
               <br>
-              <input type=text name=username maxlength=40 placeholder="guest0001" value=${safe(username)}>
+              <input type=text name=username maxlength=40 placeholder="guest0001" value="${safe(username)}">
             </label>
           <p>
             <label>
@@ -211,19 +210,6 @@
   }
 
 // helpers
-  // Notes
-    // This fixes unreliable autofocus attribute to ensure message composer is focused
-    // autofocus attribute fails in some cases including when hash fragment present
-  export function focusComposer() {
-    setTimeout(() => {
-      const composer = document.querySelector('form.messager .composer'); 
-      if ( composer instanceof HTMLTextAreaElement && document.activeElement != composer ) {
-        composer.focus();
-      }
-    }, 0);
-    // setTimeout ensured we wait until after render
-  }
-
   // format timestamp into a 12 or 24 clock time 
   function getClockTime(timestamp, mode) {
     const dateAt = new Date(timestamp);

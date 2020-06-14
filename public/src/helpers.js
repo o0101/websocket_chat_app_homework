@@ -71,10 +71,6 @@
 
 // imperfect focus restoring helpers
   // we need helpers to keep focus where it was before the last render
-  // because we do the easiest render possible and just re-render the 
-  // whole view tree on every change
-  // we do this simple render to keep things simple while using no framework
-  // and here is where we do our best to keep focus in the right place
   function *imperfectlySaveAndRestoreFocus() {
     // we use a generator to track focus because 
     // generators make it easy to keep track of 
@@ -90,13 +86,11 @@
 
       yield;
 
+      // we don't want to preserve focus across route changes
       if ( active ) {
         const newActive = document.querySelector(imperfectlyGetSelector(active));
         if ( newActive ) {
           newActive.focus();
-          if ( !! value ) {
-            newActive.value = value;
-          }
           try {
             Object.assign(newActive,{selectionStart,selectionEnd});
           } catch(e) {}
