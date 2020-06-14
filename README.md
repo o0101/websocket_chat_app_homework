@@ -1,38 +1,46 @@
-# Development environment: Chrome (on windows), vim, Node.JS on Debian
+# Chat App Homework
 
-## Stage 1 (necessary requirements)
-**[[DONE]]**
-  - DONE make chat view: list and form
-  - DONE add function to select latest chat message and scroll into view if needed (use css :last) (runs on rerender this route)
-  - DONE add onsubmit to form to send message
-  - DONE add onmessage handler to redraw whole app
-  - DONE and onhashchange handler to redraw whole app (for settings/chat routes)
-  - DONE add everything to settings (light/dark, crtl+enter, etc)
-  - DONE add form to settings page
-  - DONE add onsubmit to that form to save to localstorage
-  - DONE add function to load settings from localstorage (runs on rerender this route)
-  - DONE add a default settings static object
-  - DONE well commented self-documenting code
-  - DONE add css to fulfill minimal requirements (my message right, others messages left, responsive, landscape/portrait, light/dark mode)
-  - DONE add title blinking effect if tab is not active
-  - DONE test in Firefox, and Safari
-  - DONE add tests layer 1 (use typescript to check types)
-- add readme with features (required and optional sections)
-- add tests layer 2 (basic unit tests as per issue)
+A very simple chat app in Node.JS, JavaScript, HTML and CSS. Does not use any framework.
 
-## Stage 2 (my own improvement)
-**[[DONE]]**
-  - DONE use no frameworks, only vanilla JS (per response to question)
-  - DONE format code nicely
-  - optional ideas 1: add ephemeral key to messages, being the number of seconds they exist from delivery, after which they are deleted [[do not implement]] 
-  - optional ideas 2: add encrypted flag to messages, indicating the message has been e2-encrypted using a password (private key, participants must share out of channel) [[do not implement]]
-  - optional ideas 3: add a room list route (a view that just lists names of members in the room), and a room count on the chat route (number of members) [[do not implement]]
-  - optional ideas 4: add a door list (in other words, you cannot get in unless your member name is on the list) [[do not implement]]
+Server is a very simple websocket broadcast server that also tracks usernames to prevent impersonation and conflicts.
 
-## Stage 3 (selected optional requirements)
-- Add emoji keyboard (use emoji-button https://emoji-button.js.org/)
+Client is a simple JS app that works cross-browser and provides a nice user interface.
 
-## Submission 
-- Double check app against all requirements
-- Document instructions in README
-- Submit
+# Running
+
+Clone this repo and
+
+```console
+npm i && npm test
+```
+
+Alternately, [see the demo](http://boogeh.com)
+
+# Features
+
+- [X] Chat page
+- [X] Settings page
+- [X] Responsive layout across all devices
+- [X] Works on latest Chrome, Firefox and Safari
+- [X] Chat tab blinking title with unread count
+- [X] Working settings for username, color scheme, clock display, and send hotkey.
+- [X] Design based on mockups
+- [X] No automatic code generation tools used
+- [X] Clean, small, modular code
+- [X] Working code 
+- [X] Tests main functionality of members joining and leaving, and sending messages
+
+# Things that are different
+
+- No optional features. My focus was keeping it simple.
+- No React. No framework at all. I requested this and it was okayed.
+- No need for CSS preprocessors (CSS here is very simple).
+- No need for TypeScript. I used `tsc --checkJs` to check for issues and fixed any. 
+- No need for state management. 
+
+# Development Notes
+
+- Most bugs that occured were not type related bugs but due to cross-browser differnces in CSS, layout.
+- Adding explicit types would only take more typing and lengthen this homework assignment for no good reason. 
+- Adding React would also be unnecessary. This is a simple app, with small components and only 2 routes. There's no need for added complexity. Also, it was related to me that 'no framework would be best IMO'.
+- Adding CSS preprocessors would also be unnecessary, the CSS is very simple.

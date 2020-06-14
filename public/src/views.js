@@ -181,7 +181,6 @@
               <br>
               <select name=language>
                 <option ${language == 'en' ? S : _} value=en>English</option>
-                <option ${language == 'zh' ? S : _} value=zh>Chinese</option>
               </select>
             </label>
         </fieldset>

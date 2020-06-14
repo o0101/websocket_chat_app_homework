@@ -72,8 +72,12 @@ loadChatApp();
     merge(State, clone(newState));
     update(Views.App, State);
 
-    // logging new state can get lengthy
-    // log({newState});
+    // restore scroll position if needed
+    if ( State.route == 'chat' ) {
+      const list = document.querySelector('ul.chat');
+      console.log(list.scrollTop, State.view.chatScrollTop);
+      list.scrollTop = State.view.chatScrollTop == undefined ? list.scrollHeight : State.view.chatScrollTop;
+    }
   }
 
   // functions for rendering stuff outside <body>
@@ -110,6 +114,11 @@ loadChatApp();
     if ( route == 'settings' ) {
       loadSettings();
     }
+
+    // save chat scroll position
+    if ( State.route == 'chat' ) {
+      State.view.chatScrollTop = document.querySelector('ul.chat').scrollTop;
+    } 
 
     draw({route});
     drawTitle();
@@ -176,22 +185,27 @@ loadChatApp();
       'chat.messages': State.chat.messages.concat([data])
     });
 
-    // and then create a single message view
-    const messageDom = toDOM(Views.ChatMessage(data)).querySelector('li');
-    // and insert it into the list
-    const list = document.querySelector('ul.chat');
-    list.insertAdjacentElement('beforeEnd', messageDom);
+    // and then if we're in chat view
+    if ( State.route == 'chat' ) {
+      // and then create a single message view
+      const messageDom = toDOM(Views.ChatMessage(data)).querySelector('li');
+      // and insert it into the list
+      const list = document.querySelector('ul.chat');
+      list.insertAdjacentElement('beforeEnd', messageDom);
+      // even tho this breaks our notion 'render the whole tree at once'
+      // it works well for performance
 
-    // even tho this breaks our notion 'render the whole tree at once'
-    // it works well for performance
+      // scroll the latest into view
+      // if it's from us OR
+      // if we're not somewhere above the 'last page' of scrolled messages
+      if ( data.fromMe || (list.scrollHeight - list.scrollTop) <= 1.618*list.clientHeight ) {
+        // bring the latest into view
+        console.log('scroll into view');
+        messageDom.scrollIntoView();
+      }
 
-    Views.focusComposer();
-
-    // if we're roughly in the last 'page' of scrolled messages
-    if ( (list.scrollHeight - list.scrollTop) <= 1.618*list.clientHeight ) {
-      // bring the latest into view
-      messageDom.scrollIntoView();
-    } // otherwise we might be scrolling back into history and don't want to be jolted
+      Views.focusComposer();
+    }
   }
 
   function sendMessage(submission) {
