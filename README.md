@@ -20,11 +20,11 @@ Alternately, [see the demo](http://boogeh.com)
 
 # Running tests
 
-To run tests visit [the test page](http://booge.com/runtests.html)
+To run tests visit [the test page](http://boogeh.com/runtests.html)
 
 Or, if you're running locally, it's http://localhost:8080/runtests.html
 
-**Note** to pass the tests connect to the server by yourself. Any other connection which cause the counts used by the tests to deviate from expectations.
+**Note** to pass the tests connect to a server by yourself. Any other connection will cause the test counts to deviate from expectations.
 
 # Features
 
@@ -47,6 +47,7 @@ Or, if you're running locally, it's http://localhost:8080/runtests.html
 - No CSS preprocessors. CSS here is very simple.
 - No TypeScript. I used `tsc --checkJs` to check for issues and fixed any. 
 - No complex state management. Just deep merge new state with existing.
+- No socket.io. The server is a hugely simple websocket server. Client reconnects with exponential backoff.
 
 # Development Philosophy
 

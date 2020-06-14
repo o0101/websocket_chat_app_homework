@@ -91,7 +91,9 @@ loadChatApp();
 
         list.insertAdjacentElement('beforeend', messageDom);
 
+        // if I sent the message or if we not above the 'last page' of messages
         if ( data.fromMe || (list.scrollHeight - list.scrollTop) <= 1.618*list.clientHeight ) {
+          // scroll that latest message into view
           setTimeout(() => messageDom.scrollIntoView(), 0);
           // the timeout ensures that we scroll into view after any IME is opened
         }
@@ -251,9 +253,6 @@ loadChatApp();
     } else {
       const formData = new FormData(event.currentTarget);
 
-      // Note
-        // <FormData>.entries() doesn't work on Edge 17, but does on Edge 18 
-        // Plus, Edge was not in the browser list for this homework
       for( const [key, value] of formData.entries() ) {
         newSettings[key] = value;
       }
@@ -268,7 +267,7 @@ loadChatApp();
       }
     }
 
-    // server accounts for usernames, so we need to send a change
+    // server tracks usernames, so we need to send a change
     if ( newSettings.username != State.settings.username ) {
       send({code:Config.myCode, newUsername: newSettings.username});
     }
@@ -337,21 +336,13 @@ loadChatApp();
     }
 
     function showUnreadInTitle() {
-      if ( State.chat.unreadCount ) {
-        drawTitle({'view.showUnreadCount': true});
-      }
-      if ( animate ) {
-        setTimeout(clearUnreadFromTitle, 1000);
-      }
+      if ( State.chat.unreadCount ) drawTitle({'view.showUnreadCount': true});
+      if ( animate ) setTimeout(clearUnreadFromTitle, 1000);
     }
 
     function clearUnreadFromTitle() {
-      if ( State.view.showUnreadCount ) {
-        drawTitle({'view.showUnreadCount': false});
-      }
-      if ( animate ) {
-        setTimeout(showUnreadInTitle, 500);
-      }
+      if ( State.view.showUnreadCount ) drawTitle({'view.showUnreadCount': false});
+      if ( animate ) setTimeout(showUnreadInTitle, 500);
     }
   }
 

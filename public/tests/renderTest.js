@@ -14,6 +14,5 @@ export default async function run({memberCount, messageCount}) {
 
   console.log('Completed render tests');
 
-
   return foundMessages == EXPECTED_MESSAGE_COUNT && foundRoomNotes == EXPECTED_ROOM_NOTE_COUNT;
 }

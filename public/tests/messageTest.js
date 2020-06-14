@@ -41,7 +41,6 @@ export default async function run(TOTAL) {
 
   console.log('Completed message tests');
 
-
   return received == TOTAL;
 
   function newMessage() {
