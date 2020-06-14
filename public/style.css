@@ -47,7 +47,7 @@ article.app {
 /* chat */
   ul.chat, form.settings fieldset {
     grid-area: scroller;
-    max-height: 100vh;
+    max-height: 100%;
     overflow: auto;
     margin: 0;
   }
@@ -88,8 +88,11 @@ article.app {
   }
 
   /* message list item */
-    li.message {
+    li.message, li.room-note {
       max-width: var(--maxmessagewidth);
+    }
+
+    li.message {
       align-self: start;
     }
 
@@ -115,8 +118,9 @@ article.app {
 
     li q, li cite {
       overflow-wrap: break-word;
+      word-wrap: break-word;
       hyphens: auto;
-      word-break: break-all;
+      word-break: break-word;
     }
 
     li time {

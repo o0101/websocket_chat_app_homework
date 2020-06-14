@@ -24,6 +24,8 @@
             <li><a href=#settings 
               accesskey=p
               ${state.route == 'settings' ? 'class=active' : _}>Settings</a>
+            <li><a href=${location.pathname == '/runtests.html' ? '/>Normal' : '/runtests.html>Test'}</a>
+            <li><a target=_blank href=https://github.com/cris691/websocket_chat_app_homework>GitHub</a>
           </ul>
         </nav>
         ${currentView(state)}
@@ -62,7 +64,7 @@
       case 'note.nameChange':
         return `
           <li class=room-note> 
-            <q cite=acct:app@server>${safe(username)} changed their name to ${safe(newUsername)}</q>
+            <q>${safe(username)} changed their name to ${safe(newUsername)}</q>
             <div class=metadata>
               <time datetime=${iso8601}>${fullTime}</time>
             </div>
@@ -71,7 +73,7 @@
       case 'note.newMember':
         return `
           <li class=room-note> 
-            <q cite=acct:app@server>
+            <q>
               ${safe(newUsername)} entered the room.
               <br>
               ${safe(memberCount)} total members.
@@ -84,7 +86,7 @@
       case 'note.disconnection':
         return `
           <li class=room-note> 
-            <q cite=acct:app@server>${safe(username)} left the room.</q>
+            <q>${safe(username)} left the room.</q>
             <div class=metadata>
               <time datetime=${iso8601}>${fullTime}</time>
             </div>
@@ -93,7 +95,7 @@
       case 'chat.message':
         return `
           <li class="message ${fromMe? 'from-me' : ''}">
-            <q cite=acct:${username}>${safe(message)}</q>
+            <q>${safe(message)}</q>
             <div class=metadata>
               <cite rel=author>${safe(username)}</cite>
               <time datetime=${iso8601}>${fullTime}</time>

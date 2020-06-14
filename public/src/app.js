@@ -91,7 +91,9 @@ loadChatApp();
 
         list.insertAdjacentElement('beforeend', messageDom);
 
+        // if I sent the message or if we not above the 'last page' of messages
         if ( data.fromMe || (list.scrollHeight - list.scrollTop) <= 1.618*list.clientHeight ) {
+          // scroll that latest message into view
           setTimeout(() => messageDom.scrollIntoView(), 0);
           // the timeout ensures that we scroll into view after any IME is opened
         }
@@ -334,21 +336,13 @@ loadChatApp();
     }
 
     function showUnreadInTitle() {
-      if ( State.chat.unreadCount ) {
-        drawTitle({'view.showUnreadCount': true});
-      }
-      if ( animate ) {
-        setTimeout(clearUnreadFromTitle, 1000);
-      }
+      if ( State.chat.unreadCount ) drawTitle({'view.showUnreadCount': true});
+      if ( animate ) setTimeout(clearUnreadFromTitle, 1000);
     }
 
     function clearUnreadFromTitle() {
-      if ( State.view.showUnreadCount ) {
-        drawTitle({'view.showUnreadCount': false});
-      }
-      if ( animate ) {
-        setTimeout(showUnreadInTitle, 500);
-      }
+      if ( State.view.showUnreadCount ) drawTitle({'view.showUnreadCount': false});
+      if ( animate ) setTimeout(showUnreadInTitle, 500);
     }
   }
 

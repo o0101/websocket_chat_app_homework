@@ -86,7 +86,6 @@
 
       yield;
 
-      // we don't want to preserve focus across route changes
       if ( active ) {
         const newActive = document.querySelector(imperfectlyGetSelector(active));
         if ( newActive ) {
