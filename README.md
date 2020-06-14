@@ -14,7 +14,17 @@ Clone this repo and
 npm i && npm test
 ```
 
+Then visit http://localhost:8080 in your browser on the same machine.
+
 Alternately, [see the demo](http://boogeh.com)
+
+# Running tests
+
+To run tests visit [the test page](http://booge.com/runtests.html)
+
+Or, if you're running locally, it's http://localhost:8080/runtests.html
+
+**Note** to pass the tests connect to the server by yourself. Any other connection which cause the counts used by the tests to deviate from expectations.
 
 # Features
 
@@ -36,22 +46,21 @@ Alternately, [see the demo](http://boogeh.com)
 - No React, no framework at all. I requested this and it was okayed.
 - No CSS preprocessors. CSS here is very simple.
 - No TypeScript. I used `tsc --checkJs` to check for issues and fixed any. 
-- No complex state management. 
+- No complex state management. Just deep merge new state with existing.
 
 # Development Philosophy
 
 In this project I tried to do the following things:
 
 - Keep it simple
-- Merge state updates into a single state object and render the whole view tree from that on every change.
+- Merge state updates into a single state object 
+- render the whole view tree from that state object on every change.
+
+In some cases I needed to break that simple model and where I've done that, I've tried to make it clear, such as with `drawLatestMessage()` which was a performance improvement and bug fix over redrawing the whole tree on every arriving message.
 
 # Development Notes
 
-- The simple render (like immediate mode GUI) that I use here had some issues at high refresh rates.
-- If messages arrived quickly, and you were typing your own message, then because the textarea was being replaced at every render,
-often your keystrokes for input were getting lost. To solve this, I broke the 'render the whole tree' when we receive a message, 
-and instead just insert the message to the end of the `<ul>`
 - Most bugs that occured were not type related bugs but due to cross-browser differnces in CSS, layout.
-- Adding explicit types would only take more typing and lengthen this homework assignment for no good reason. 
+- Adding explicit types would only lengthen this homework assignment for no good reason. 
 - Adding React would also be unnecessary. This is a simple app, with small components and only 2 routes. There's no need for added complexity. Also, it was related to me that 'no framework would be best IMO'.
 - Adding CSS preprocessors would also be unnecessary, the CSS is very simple.
