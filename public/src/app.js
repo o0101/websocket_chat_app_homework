@@ -251,9 +251,6 @@ loadChatApp();
     } else {
       const formData = new FormData(event.currentTarget);
 
-      // Note
-        // <FormData>.entries() doesn't work on Edge 17, but does on Edge 18 
-        // Plus, Edge was not in the browser list for this homework
       for( const [key, value] of formData.entries() ) {
         newSettings[key] = value;
       }
@@ -268,7 +265,7 @@ loadChatApp();
       }
     }
 
-    // server accounts for usernames, so we need to send a change
+    // server tracks usernames, so we need to send a change
     if ( newSettings.username != State.settings.username ) {
       send({code:Config.myCode, newUsername: newSettings.username});
     }
