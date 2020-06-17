@@ -1,5 +1,7 @@
 import {sleep} from './helpers.js';
 
+// add TOTAL members and have each send 1 message
+// then remove those members
 export default async function run(TOTAL) {
   const sockets = [];
   let disconnects = 0;
