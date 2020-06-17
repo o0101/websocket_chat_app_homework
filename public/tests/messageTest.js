@@ -1,5 +1,6 @@
 import {sleep} from './helpers.js';
 
+// send TOTAL messages
 export default async function run(TOTAL) {
   const MESSAGE_CONTENT = 'Hello there you have a wonderful beautiful day.'
   let received = 0;
@@ -24,7 +25,7 @@ export default async function run(TOTAL) {
   console.log(`Sending ${TOTAL} messages...`);
 
   testSocket.onopen = async () => {
-    // add new members
+    // send messages
     for( let i = 0; i < TOTAL; i++ ) {
       newMessage(); 
       await sleep(10);
