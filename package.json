@@ -33,7 +33,7 @@
   "homepage": "https://github.com/cris691/bulgogi#readme",
   "dependencies": {
     "esm": "^3.2.25",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "helmet": "^3.23.0",
     "ws": "^7.3.0"
   },
